@@ -64,8 +64,9 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
                            color=color_array[gen_mode])
             tmp += normalized_content[gen_mode]
         ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mu = $' +
-                str(np.round(purity[category], 3)), fontsize=16, color='w')
+                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\matchal{P} = $' +
+                str(np.round(purity[category], 3)) + r' events; $\matchal{A} = $' + str(np.round(acceptance[category], 3))
+                , fontsize=16, color='w')
 
     ax.get_yaxis().set_visible(False)
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
