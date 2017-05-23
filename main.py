@@ -26,13 +26,13 @@ if __name__ == "__main__":
     # if not (tests.common_saves_found() and tests.lengths_consistent()):
     #     raise UserWarning
 
-    for plop in [0, 3, 5]:
+    for plop in [3, 5]:
         cst.features_set_selector = plop
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         for model_name in cst.models_dict.keys():
             logging.info('Studying model ' + model_name + suffix)
             try:
-                open('saves/' + model_name + suffix + '/categorizer.pkl', 'rb')
+                open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
             except IOError:
                 logging.info('Training model ' + model_name)
                 ctg.model_training(model_name)

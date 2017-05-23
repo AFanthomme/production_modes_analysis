@@ -4,7 +4,7 @@ Define all constants needed for what we want to do, and the sklearn models to us
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from src.custom_classifiers import SelfThresholdingAdaClassifier
+#from core.custom_classifiers import SelfThresholdingAdaClassifier
 import numpy as np
 import pickle
 import datetime
@@ -56,7 +56,6 @@ likelihood_names = ['p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'p_JQCD_SIG_ghg2_1_J
 backgrounds = ['ZZTo4l']
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
-my_classifier = SelfThresholdingAdaClassifier(base_estimator=decision_stump, n_estimators=300)
 
 models_dict = {}
 
