@@ -60,10 +60,16 @@ decision_stump = DecisionTreeClassifier(max_depth=1)
 models_dict = {}
 
 def add_stumps():
-    for n_est in [300, 500, 1000]:
+    for n_est in [100, 200, 300, 500, 1000]:
         for purity_param in np.arange(45, 100, step=5):
             models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
             (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
+
+def add_stumps_slower():
+    for n_est in [300, 500, 1000]:
+        for purity_param in np.arange(45, 100, step=5):
+            models_dict['adaslow03_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
 
 def add_logreg():
     for n_est in [50, 100, 200]:
@@ -74,3 +80,4 @@ def add_logreg():
 
 add_logreg()
 add_stumps()
+add_stumps_slower()

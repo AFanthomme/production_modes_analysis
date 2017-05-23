@@ -12,6 +12,7 @@ from shutil import rmtree
 from sklearn import preprocessing as pr
 from core.misc import frozen
 
+r.gROOT.SetBatch()
 
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'

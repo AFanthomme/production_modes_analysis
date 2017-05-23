@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import pickle
 import os
-import core.preprocessing as pr
 import core.trainer as ctg
 import core.constants as cst
 from core.evaluation import content_plot
@@ -18,6 +17,7 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
+    #import core.preprocessing as pr
     #pr.get_background_files(tuple(range(7)))
     #pr.full_process((0, 2, 3, 4, 5, 6, 1))
 
