@@ -78,6 +78,14 @@ def add_logreg():
             (AdaBoostClassifier(LogisticRegression(solver='newton-cg', multi_class='ovr', n_jobs=8),
                                 n_estimators=n_est), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
 
+def add_stumps_content():
+    for n_est in [100, 200, 300, 500, 1000]:
+        for purity_param in np.arange(5, 100, step=5):
+            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
+
+
 add_logreg()
 add_stumps()
 add_stumps_slower()
+add_stumps_content()

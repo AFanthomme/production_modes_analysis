@@ -31,7 +31,7 @@ if __name__ == "__main__":
     #legacy.merge_vector_modes()
     #legacy.generate_metrics()
 
-    for plop in []:
+    for plop in [3]:
         cst.features_set_selector = plop
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         for model_name in cst.models_dict.keys():

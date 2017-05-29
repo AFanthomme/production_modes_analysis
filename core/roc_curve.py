@@ -10,7 +10,7 @@ decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
 def add_stumps(base_dict = {}):
-    for n_est in [300, 500, 1000]:
+    for n_est in [100, 200, 300, 500, 1000]:
         for purity_param in np.arange(45, 100, step=5):
             base_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
             (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
