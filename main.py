@@ -9,6 +9,7 @@ from core.evaluation import content_plot
 from core import assertions
 from core import legacy
 import core.preprocessing as pr
+import core.roc_curve as roc
 logging.basicConfig(filename='logs', format='%(levelname)s %(asctime)s %(message)s', level=logging.INFO,
                     datefmt='%H:%M:%S')
 logging.info('Logger initialized')
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     #legacy.read_root_files()
     #legacy.get_background_files()
     #legacy.merge_vector_modes()
-    legacy.generate_metrics()
+    #legacy.generate_metrics()
 
     for plop in []:
         cst.features_set_selector = plop
@@ -49,3 +50,4 @@ if __name__ == "__main__":
 
             content_plot(model_name)
         logging.info('All models studied with features set ' + suffix)
+    roc.main()

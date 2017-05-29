@@ -7,7 +7,7 @@ import core.trainer as ctg
 import core.constants as cst
 import logging
 
-def content_plot(model_name, permutation=None, save=True, verbose=cst.global_verbosity):
+def content_plot(model_name, permutation=None, save=False, verbose=cst.global_verbosity):
     tags_list = copy(cst.event_categories)
 
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -36,7 +36,6 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
     bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
     bkg_weights *= cst.cross_sections['ZZTo4l'] * 0.5 * cst.luminosity / cst.event_numbers['ZZTo4l']
     bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
-    logging.info('total bkg events : ' + str(np.sum(bkg_repartition)))
     purity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
     acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
     np.savetxt('saves/metrics/' + model_name + '_purity.txt', purity)
@@ -71,23 +70,26 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
 
     ax.get_yaxis().set_visible(False)
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
-    p.savefig('saves/figs/' + model_name + '_content_plot.png')
+    if save:
+        fig.savefig('saves/figs/' + model_name + '_content_plot.png')
+    p.close(fig) 
 
-    fig = p.figure()
-    p.title('Background contents for ' + model_name, y=-0.12)
-    ax = fig.add_subplot(111)
+    fig2 = p.figure(2)
+    p.title('Per-category fraction of background events for ' + model_name, y=-0.12)
+    ax = fig2.add_subplot(111)
     for category in range(nb_categories):
         position = ordering[category]
-        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category],# / np.sum(contents_table[category,:]),
-                   color='k', label=cst.event_categories[category])
+        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category] / np.sum(contents_table[category,:]),
+                  color='0.75', label=cst.event_categories[category])
         ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' + 
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r'total events'
-                , fontsize=16, color='w')
+                str(np.round(bkg_repartition[category], 2)) + r' background events'
+                , fontsize=16, color='b')
 
     ax.get_yaxis().set_visible(False)
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
-    p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
-
+    if save:
+        p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
+    p.close(fig2)
 
 def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):
     tags_list = copy(cst.event_categories)

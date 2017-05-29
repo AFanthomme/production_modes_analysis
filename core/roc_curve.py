@@ -4,7 +4,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 import matplotlib.cm as cm
 import matplotlib.pyplot as p
-
+from core.evaluation import content_plot
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
@@ -38,23 +38,29 @@ def custom_roc():
     slow_stumps_dict = add_stumps_slower().keys()
  
     p.figure()
-    p.xlim(0.2, 0.7)
-    p.ylim(0.2, 0.7)
+    p.xlim(0., 1.)
+    p.ylim(0., 1.)
     p.xlabel('Purity')
     p.ylabel('Acceptance')
-    p.title('Purity vs Acceptance plot for all studied models and set ' + extension)
+    p.title('Purity vs Acceptance in VBF category with featureset ' + extension)
 
-    acceptance = np.loadtxt('saves/metrics/legacy_acceptance.txt')[1]
-    puritie = np.loadtxt('saves/metrics/legacy_purity.txt')[1]
+    acceptance = np.loadtxt('saves/metrics/legacy_acceptance_fuse.txt')[1]
+    purity = np.loadtxt('saves/metrics/legacy_purity_fuse.txt')[1]
     #        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
     #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
-    p.scatter(puritie, acceptance, marker='*', c='b', s=4, label='Legacy Mor17')
+    p.scatter(purity, acceptance, marker='*', c='b', s=32, label='Legacy Mor17 1j + 2j')
+    acceptance = np.loadtxt('saves/metrics/legacy_acceptance_2j.txt')[1]
+    purity = np.loadtxt('saves/metrics/legacy_purity_2j.txt')[1]
+    p.scatter(purity, acceptance, marker='*', c='r', s=32, label='Legacy Mor17 2j only')
 
     for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
-        acceptances = [np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1] for name in plop]
-        purities = [np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1] for name in plop]
+        acceptances = np.array([np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1] for name in plop])
+        purities = np.array([np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1] for name in plop])
+        scores = purities + acceptances
+        best_candidate = np.argmax(scores)
+        content_plot(plop[best_candidate], save=True)
 #        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
 #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
         p.scatter(purities, acceptances, marker=symbol, c='b', label=str(n_est) + 'slower stumps')
@@ -76,9 +82,12 @@ def custom_roc():
 #        p.scatter(purities, acceptances, marker=symbol, c='g', label=str(n_est) + ' logregs')
 
     p.legend(loc=2)
+    p.savefig('saves/figs/full_roc')
     p.show()
 
+def main():
+    custom_roc()
 
 if __name__ == "__main__":
-    custom_roc()
+   main()
 

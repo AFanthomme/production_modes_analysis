@@ -19,8 +19,8 @@ r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Category_no_ext.cc")
 #print hasattr(r, 'categoryMor17')
-print inspect.getargspec(r.categoryMor17)
-print r.categoryMor17(1, 2, 3, 4, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, True)
+inspect.getargspec(r.categoryMor17)
+r.categoryMor17(1, 2, 3, 4, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, True)
 
 calculated_features = {
 'DVBF2j_ME': (r.DVBF2j_ME, ['p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
@@ -330,7 +330,7 @@ def generate_metrics():
     correct_in_cat = [0 for _ in range(nb_categories+1)]
     wrong_in_cat = [0 for _ in range(nb_categories+1)]
     
-    real_cats = [0, 1, 1, 2, 3, 4, 5]
+    real_cats = [0, 0, 1, 2, 3, 4, 5]
     for shitty_cat in range(nb_categories+1):
         correct_in_cat[shitty_cat] = contents_table[shitty_cat, real_cats[shitty_cat]]
         wrong_in_cat[shitty_cat] = np.sum(contents_table[shitty_cat, :]) - correct_in_cat[shitty_cat] 
@@ -339,7 +339,7 @@ def generate_metrics():
     purity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories+1)]
     acceptance = [correct_in_cat[cat] / cat_total_content[real_cats[cat]] for cat in range(nb_categories+1)]
     np.savetxt('saves/metrics/legacy_purity.txt', purity) 
-    np.savetxt('saves/metrics/legacy_aceptance.txt', acceptance) 
+    np.savetxt('saves/metrics/legacy_acceptance.txt', acceptance) 
     logging.info('Purity, acceptance : ' + str(np.mean(purity[1:])) + ', ' + str(np.mean(acceptance[1:])))
 
     fig = p.figure(2)
