@@ -34,9 +34,7 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
 
     bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-    logging.info(str(np.sum(bkg_weights)))
     bkg_weights *= cst.cross_sections['ZZTo4l'] * 0.5 * cst.luminosity / cst.event_numbers['ZZTo4l']
-    logging.info(str(np.sum(bkg_weights)))
     bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
     logging.info('total bkg events : ' + str(np.sum(bkg_repartition)))
     purity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
@@ -88,7 +86,7 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
 
     ax.get_yaxis().set_visible(False)
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
-    #p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
+    p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
 
 
 def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):

@@ -1,5 +1,11 @@
 *.idea
 pip
 logs
-saves/*
+saves/classifiers
+saves/predictions
+saves/common*
+saves/metrics
+saves/legacy
 !/main.py
+saves/figs/*
+!saves/figs/legacy*

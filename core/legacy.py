@@ -1,4 +1,5 @@
 import numpy as np
+import inspect
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -14,10 +15,12 @@ from core import constants as cst
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'
 
-# This is done here to avoid having root anywhere it doesn't need to be
 r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Category_no_ext.cc")
+#print hasattr(r, 'categoryMor17')
+print inspect.getargspec(r.categoryMor17)
+print r.categoryMor17(1, 2, 3, 4, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, True)
 
 calculated_features = {
 'DVBF2j_ME': (r.DVBF2j_ME, ['p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
@@ -43,7 +46,7 @@ event_categories = ['ggH', 'VBFH', 'VH_hadr', 'VH_lept', 'ZH_met', 'ttH']
 luminosity = 35.9   # (fb-1), factor 2 because only half of the initial data set used for evaluation
 cross_sections = {'ggH': 13.41, 'VBFH': 1.044, 'WminusH': 0.147, 'WplusH': 0.232, 'ZH': 0.668, 'ttH': 0.393,
                   'VH': 0.232, 'VH_lept': 0.232, 'VH_hadr': 0.232, 'bbH': 0.1347, 'ZH_met': 0.668,
-                  'ZZTo4l': 1.256}
+                  'ZZTo4l': 1256.}
 event_numbers = {'ZH': 376657.21875, 'WplusH': 252870.65625, 'WminusH': 168069.609375, 'ttH': 327699.28125,
                  'ggH': 999738.125, 'VBFH': 1885726.125, 'VH': 252870.65625, 'VH_lept': 252870.65625,
                  'VH_hadr': 252870.65625, 'bbH':327699.28125, 'ZH_met': 376657.21875, 'ZZTo4l': 6670241.5}
@@ -67,7 +70,6 @@ def read_root_files():
             tree = rfile.Get('ZZTree/candTree')
 
             ref_mask = None
-	    print('studying prod mode ' + prod_mode)
             if prod_mode not in ['WminusH', 'WplusH', 'ZH']:
                 data_set = tree2array(tree, branches=to_retrieve, selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
@@ -340,16 +342,15 @@ def generate_metrics():
     np.savetxt('saves/metrics/legacy_aceptance.txt', acceptance) 
     logging.info('Purity, acceptance : ' + str(np.mean(purity[1:])) + ', ' + str(np.mean(acceptance[1:])))
 
-    fig = p.figure()
+    fig = p.figure(2)
     p.title('Background contents for legacy classification', y=-0.12)
     ax = fig.add_subplot(111)
     for category in range(nb_categories):
         position = ordering[category]
-        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category],# / np.sum(contents_table[category,:]),
-                   color='k', label=cst.event_categories[category])
-        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r'total events'
-                , fontsize=16, color='w')
+        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category] / np.sum(contents_table[category,:]),
+                   color='0.75', label=cst.event_categories[category])
+        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, str(tags_list[category]) + ', ' +
+                str(np.round(bkg_repartition[category], 2)) + r' bkg events', fontsize=16, color='b')
 
     ax.get_yaxis().set_visible(False)
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
@@ -357,7 +358,7 @@ def generate_metrics():
 
 
 if __name__ == '__main__':
-   # read_root_files()
-   # get_background_files()
-   # merge_vector_modes()
+    read_root_files()
+    get_background_files()
+    merge_vector_modes()
     generate_metrics()
