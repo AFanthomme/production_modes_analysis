@@ -38,10 +38,12 @@ def generate_predictions(model_name):
 
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', mode='rb') as f:
         classifier = pickle.load(f)
+    with open(directory + 'scaler.pkl', mode='rb') as f:
+        scaler = pickle.load(f)
 
     results = classifier.predict(scaled_dataset)
     probas = classifier.predict_proba(scaled_dataset)
-    bkg_results = classifier.predict(background_dataset)
+    bkg_results = classifier.predict(scaler.transform(background_dataset))
 
     out_path = 'saves/predictions/' + model_name + suffix
     np.savetxt(out_path + '_predictions.prd', results)

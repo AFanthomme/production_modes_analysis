@@ -10,13 +10,14 @@ import logging
 import os
 from shutil import rmtree
 import numpy.lib.recfunctions as rcf
-
+from core import constants as cst
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'
 
 # This is done here to avoid having root anywhere it doesn't need to be
 r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
+r.gROOT.LoadMacro("libs/Category_no_ext.cc")
 
 calculated_features = {
 'DVBF2j_ME': (r.DVBF2j_ME, ['p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
@@ -53,7 +54,7 @@ def remove_fields(a, *fields_to_remove):
     return a[[name for name in a.dtype.names if name not in fields_to_remove]]
 
 def read_root_files():
-        directory = 'saves/legacy'
+        directory = 'saves/legacy/'
         if os.path.isdir(directory):
             rmtree(directory)
         os.makedirs(directory)
@@ -66,7 +67,7 @@ def read_root_files():
             tree = rfile.Get('ZZTree/candTree')
 
             ref_mask = None
-
+	    print('studying prod mode ' + prod_mode)
             if prod_mode not in ['WminusH', 'WplusH', 'ZH']:
                 data_set = tree2array(tree, branches=to_retrieve, selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
@@ -197,7 +198,7 @@ def read_root_files():
 
 def get_background_files():
 
-        directory = 'saves/legacy'
+        directory = 'saves/legacy/'
 
         to_retrieve, to_compute, to_remove = (base_features, None, None)
 
@@ -238,7 +239,7 @@ def get_background_files():
             logging.info(background + ' weights, training and test sets successfully stored in saves/' + directory)
 
 def merge_vector_modes():
-    directory = 'saves/legacy'
+    directory = 'saves/legacy/'
     for decay in ['_lept', '_hadr']:
         file_list = [directory + mediator + decay for mediator in ['WplusH', 'WminusH', 'ZH']]
 
@@ -258,40 +259,89 @@ def merge_vector_modes():
         np.savetxt(directory + 'VH' + decay + '_training.txt', training_set)
         np.savetxt(directory + 'VH' + decay + '_weights_training.txt', weights_train)
 
+def convert_types(a):
+    ret = [None for _ in a]
+    i= 0
+    for x, newtype in zip(a, [int, int, int, int, float, float, float, float, float,  float, float, float, float, bool]):
+       ret[i] = newtype(x)
+       i += 1
+    return ret
+
+
 def generate_metrics():
-    directory = 'saves/legacy'
+    directory = 'saves/legacy/'
     if not os.path.isdir(directory):
         os.mkdir(directory)
     nb_categories = len(event_categories)
-    contents_table = np.array((nb_categories, nb_categories))
-
-    real_cat = [1, 2, 3, 5, 4, 1, 0]
+    contents_table = np.zeros((nb_categories+1, nb_categories))
+#    reorder = [2, 3, 4, 6, 5, 1, 0]
+    reorder = [0, 1, 2, 3, 4, 5, 6]
     for cat in range(nb_categories):
         plop = np.loadtxt('saves/legacy/' + event_categories[cat] + '_training.txt')
-        plop_weights = np.loadtxt('saves/legacy/' + event_categories[cat] + '_weights_training.txt')
-        for event_idx in range(len(plop)):
-            nocool_identifier = r.categoryMor17(plop[event_idx][base_features])
-            contents_table[real_cat[nocool_identifier], cat] += plop_weights[event_idx]
+        plop_weights = np.loadtxt('saves/legacy/' + event_categories[cat] + '_weights_training.txt') * cst.cross_sections[event_categories[cat]] /event_numbers[event_categories[cat]]
 
+        for event_idx in range(len(plop)):
+            u = np.append(plop[event_idx, :], True)
+            u = convert_types(u)
+            nocool_identifier = r.categoryMor17(*u)
+            contents_table[reorder[nocool_identifier], cat] += plop_weights[event_idx]
+    contents_table *= luminosity
+
+    ordering = [nb_categories - 1 - i for i in range(nb_categories+1)]
+
+    fig = p.figure()
+    p.title('Content plot for legacy categorization', y=-0.12)
+    ax = fig.add_subplot(111)
+    color_array = ['b', 'g', 'r', 'brown', 'm', '0.75', 'c', 'b']
+    tags_list = range(nb_categories + 1)
+    for category in range(nb_categories+1):
+        position = ordering[category]
+        normalized_content = contents_table[category, :].astype('float') / np.sum(contents_table[category, :])
+        tmp = 0.
+        for gen_mode in range(nb_categories):
+            if position == 1:
+                ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, tmp,
+                           tmp + normalized_content[gen_mode],
+                           color=color_array[gen_mode], label=cst.event_categories[gen_mode])
+            else:
+                ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, tmp,
+                           tmp + normalized_content[gen_mode],
+                           color=color_array[gen_mode])
+            tmp += normalized_content[gen_mode]
+        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, str(tags_list[category]) + ', ' +
+                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{P} = $', fontsize=16, color='w')
+
+    ax.get_yaxis().set_visible(False)
+    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
+    p.savefig('saves/figs/legacy_content_plot.png')
 
     bkg_weights = np.loadtxt('saves/legacy/' + 'ZZTo4l_weights.wgt')
     plop = np.loadtxt('saves/legacy/' + 'ZZTo4l.dst')
-    bkg_weights *= cross_sections['ZZTo4l'] / event_numbers['ZZTo4l']
-    bkg_predictions = [r.categoryMor17(plop[event_idx][base_features]) for event_idx in range(len(bkg_weights))]
-    bkg_repartition = np.array([np.sum(bkg_weights[np.where(real_cat[bkg_predictions] == cat)])
-                                for cat in range(nb_categories)])
+    bkg_repartition = np.zeros(nb_categories + 1)
+    for event_idx in range(len(plop)):
+        u = np.append(plop[event_idx, :], True)
+        u = convert_types(u)
+        nocool_identifier = r.categoryMor17(*u)
+        bkg_repartition[nocool_identifier] += bkg_weights[event_idx]
+    bkg_repartition *= cross_sections['ZZTo4l'] * cst.luminosity / cst.event_numbers['ZZTo4l'] 
 
-    contents_table *= luminosity
-    correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]
-    wrong_in_cat = np.sum(np.where(np.logical_not(np.identity(nb_categories, dtype=bool)), contents_table, 0), axis=1)
+    correct_in_cat = [0 for _ in range(nb_categories+1)]
+    wrong_in_cat = [0 for _ in range(nb_categories+1)]
+    
+    real_cats = [0, 1, 1, 2, 3, 4, 5]
+    for shitty_cat in range(nb_categories+1):
+        correct_in_cat[shitty_cat] = contents_table[shitty_cat, real_cats[shitty_cat]]
+        wrong_in_cat[shitty_cat] = np.sum(contents_table[shitty_cat, :]) - correct_in_cat[shitty_cat] 
+   
     cat_total_content = np.sum(contents_table, axis=0)
-    purity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
-    acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
-
-    print('Purity, acceptance : ' + str(np.mean(purity)[1:]) + ', ' + str(np.mean(acceptance[1:])))
+    purity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories+1)]
+    acceptance = [correct_in_cat[cat] / cat_total_content[real_cats[cat]] for cat in range(nb_categories+1)]
+    np.savetxt('saves/metrics/legacy_purity.txt', purity) 
+    np.savetxt('saves/metrics/legacy_aceptance.txt', acceptance) 
+    logging.info('Purity, acceptance : ' + str(np.mean(purity[1:])) + ', ' + str(np.mean(acceptance[1:])))
 
 if __name__ == '__main__':
-    read_root_files()
-    get_background_files()
-    merge_vector_modes()
+   # read_root_files()
+   # get_background_files()
+   # merge_vector_modes()
     generate_metrics()

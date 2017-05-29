@@ -12,11 +12,9 @@ from shutil import rmtree
 from sklearn import preprocessing as pr
 from core.misc import frozen
 
-r.gROOT.SetBatch()
 
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'
-
 # This is done here to avoid having root anywhere it doesn't need to be
 r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
@@ -27,7 +25,6 @@ calculated_features = {
 'DWHh_ME': (r.DWHh_ME, ['p_HadWH_SIG_ghw1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
 'DZHh_ME': (r.DZHh_ME, ['p_HadZH_SIG_ghz1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
 }
-
 
 # For each feature selection mode, (to get from root file, to calculate, to remove)
 features_specs = [(base_features, calculated_features, None),
@@ -405,6 +402,5 @@ def get_count(mode, idx=40):
     counter = rfile.Get('ZZTree/Counters')
     plop = counter[idx]
     print(plop)
-
 
 
