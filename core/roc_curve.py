@@ -44,14 +44,12 @@ def custom_roc():
     p.ylabel('Acceptance')
     p.title('Purity vs Acceptance in VBF category with featureset ' + extension)
 
-    acceptance = np.loadtxt('saves/metrics/legacy_acceptance_fuse.txt')[1]
-    purity = np.loadtxt('saves/metrics/legacy_purity_fuse.txt')[1]
-    #        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
-    #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
-    p.scatter(purity, acceptance, marker='*', c='b', s=32, label='Legacy Mor17 1j + 2j')
-    acceptance = np.loadtxt('saves/metrics/legacy_acceptance_2j.txt')[1]
-    purity = np.loadtxt('saves/metrics/legacy_purity_2j.txt')[1]
-    p.scatter(purity, acceptance, marker='*', c='r', s=32, label='Legacy Mor17 2j only')
+    acceptance = 0.47
+    purity = 0.37
+    p.scatter(purity, acceptance, marker='*', c='b', s=(10)**2, label='Legacy Mor17 2j only')
+    acceptance = 0.73
+    purity = 0.15
+    p.scatter(purity, acceptance, marker='*', c='r', s=(10)**2, label='Legacy Mor17 1j and 2j')
 
     for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
@@ -81,7 +79,7 @@ def custom_roc():
 #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')) for name in plop]
 #        p.scatter(purities, acceptances, marker=symbol, c='g', label=str(n_est) + ' logregs')
 
-    p.legend(loc=2)
+    p.legend(loc=1)
     p.savefig('saves/figs/full_roc')
     p.show()
 

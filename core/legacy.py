@@ -330,7 +330,7 @@ def generate_metrics():
     correct_in_cat = [0 for _ in range(nb_categories+1)]
     wrong_in_cat = [0 for _ in range(nb_categories+1)]
     
-    real_cats = [0, 0, 1, 2, 3, 4, 5]
+    real_cats = [0, 1, 1, 2, 3, 4, 5]
     for shitty_cat in range(nb_categories+1):
         correct_in_cat[shitty_cat] = contents_table[shitty_cat, real_cats[shitty_cat]]
         wrong_in_cat[shitty_cat] = np.sum(contents_table[shitty_cat, :]) - correct_in_cat[shitty_cat] 
