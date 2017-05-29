@@ -44,6 +44,11 @@ def custom_roc():
     p.ylabel('Acceptance')
     p.title('Purity vs Acceptance plot for all studied models and set ' + extension)
 
+    acceptance = np.loadtxt('saves/metrics/legacy_acceptance.txt')[1]
+    puritie = np.loadtxt('saves/metrics/legacy_purity.txt')[1]
+    #        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
+    #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
+    p.scatter(puritie, acceptance, marker='*', c='b', s=4, label='Legacy Mor17')
 
     for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
