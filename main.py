@@ -37,7 +37,6 @@ if __name__ == "__main__":
                 logging.info('Training model ' + model_name)
                 ctg.model_training(model_name)
             try:
-#                raise IOError
                 open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
                 open('saves/predictions/' + model_name + suffix + '_bkg_predictions.prd', 'rb')
             except IOError:

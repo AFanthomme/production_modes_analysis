@@ -35,7 +35,7 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
     bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
     logging.info(str(np.sum(bkg_weights)))
-    bkg_weights *= cst.cross_sections['ZZTo4l'] * cst.luminosity / cst.event_numbers['ZZTo4l']
+    bkg_weights *= cst.cross_sections['ZZTo4l'] * 0.5 * cst.luminosity / cst.event_numbers['ZZTo4l']
     logging.info(str(np.sum(bkg_weights)))
     bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
     logging.info('total bkg events : ' + str(np.sum(bkg_repartition)))
@@ -43,7 +43,7 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
     acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
     np.savetxt('saves/metrics/' + model_name + '_purity.txt', purity)
     np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
-    np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', acceptance)
+    np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
     
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
 
@@ -78,7 +78,6 @@ def content_plot(model_name, permutation=None, save=True, verbose=cst.global_ver
     fig = p.figure()
     p.title('Background contents for ' + model_name, y=-0.12)
     ax = fig.add_subplot(111)
-    color_array = ['b', 'g', 'r', 'brown', 'm', '0.75', 'c', 'b']
     for category in range(nb_categories):
         position = ordering[category]
         ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category],# / np.sum(contents_table[category,:]),

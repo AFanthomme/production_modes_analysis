@@ -323,8 +323,8 @@ def generate_metrics():
         u = convert_types(u)
         nocool_identifier = r.categoryMor17(*u)
         bkg_repartition[nocool_identifier] += bkg_weights[event_idx]
-    bkg_repartition *= cross_sections['ZZTo4l'] * cst.luminosity / cst.event_numbers['ZZTo4l'] 
-
+    bkg_repartition *= cross_sections['ZZTo4l'] * 0.5 * cst.luminosity / cst.event_numbers['ZZTo4l']
+    np.savetxt('saves/metrics/legacy' + '_bkgrepartition.txt', bkg_repartition)
     correct_in_cat = [0 for _ in range(nb_categories+1)]
     wrong_in_cat = [0 for _ in range(nb_categories+1)]
     
@@ -339,6 +339,22 @@ def generate_metrics():
     np.savetxt('saves/metrics/legacy_purity.txt', purity) 
     np.savetxt('saves/metrics/legacy_aceptance.txt', acceptance) 
     logging.info('Purity, acceptance : ' + str(np.mean(purity[1:])) + ', ' + str(np.mean(acceptance[1:])))
+
+    fig = p.figure()
+    p.title('Background contents for legacy classification', y=-0.12)
+    ax = fig.add_subplot(111)
+    for category in range(nb_categories):
+        position = ordering[category]
+        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category],# / np.sum(contents_table[category,:]),
+                   color='k', label=cst.event_categories[category])
+        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
+                str(np.round(np.sum(contents_table[category, :]), 2)) + r'total events'
+                , fontsize=16, color='w')
+
+    ax.get_yaxis().set_visible(False)
+    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
+    p.savefig('saves/figs/legacy' + '_contamination_plot.png')
+
 
 if __name__ == '__main__':
    # read_root_files()
