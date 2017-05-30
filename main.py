@@ -50,4 +50,4 @@ if __name__ == "__main__":
 
             content_plot(model_name)
         logging.info('All models studied with features set ' + suffix)
-    roc.main()
+    #roc.main()

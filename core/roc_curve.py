@@ -5,6 +5,7 @@ from sklearn.tree import DecisionTreeClassifier
 import matplotlib.cm as cm
 import matplotlib.pyplot as p
 from core.evaluation import content_plot
+import os
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
@@ -31,18 +32,36 @@ def add_stumps_slower(base_dict={}):
             (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
     return base_dict
 
+
+def add_stumps_content(base_dict={}):
+    for n_est in [100, 200, 300, 500, 1000]:
+        for purity_param in np.arange(100, 450, step=10):
+            base_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
+        for purity_param in np.arange(0, 100, step=5):
+            base_dict['adaboost_stumps_' + str(n_est) + '_0' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
+    return base_dict
+
 def custom_roc():
     extension = '_nomass'
-    stumps_dict = add_stumps().keys()
+    stumps_dict = add_stumps_content(add_stumps()).keys()
     logreg_dict = add_logreg().keys()
     slow_stumps_dict = add_stumps_slower().keys()
  
+    available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in  os.listdir('saves/classifiers/')]
+    stumps_dict = [s for s in stumps_dict if (s + extension) in available_models]
+    slow_stumps_dict = [s for s in slow_stumps_dict if (s + extension) in available_models]
+    logreg_dict = [s for s in logreg_dict if (s + extension) in available_models]
+
+
+
     p.figure()
     p.xlim(0., 1.)
     p.ylim(0., 1.)
-    p.xlabel('Purity')
+    p.xlabel('Specificity')
     p.ylabel('Acceptance')
-    p.title('Purity vs Acceptance in VBF category with featureset ' + extension)
+    p.title('Specifity vs Acceptance in VBF category with featureset ' + extension)
 
     acceptance = 0.47
     purity = 0.37

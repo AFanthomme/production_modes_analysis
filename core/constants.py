@@ -8,7 +8,7 @@ from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 import pickle
 import datetime
-
+import warnings
 global_verbosity = 0
 ignore_warnings = True
 
@@ -17,6 +17,9 @@ ignore_warnings = True
 # To add new sets of features (either from file or calculated), add the corresponding file and suffix here then
 # modify preprocessing.py
 features_set_selector = 3 
+
+if ignore_warnings:
+    warnings.filterwarnings('ignore')
 
 dir_suff_dict = [('saves/common_full/', '_full'), ('saves/common_onlydiscr/', '_onlydiscr'),
                  ('saves/common_nodiscr/', '_nodiscr'), ('saves/common_nomass/', '_nomass'),
@@ -80,12 +83,15 @@ def add_logreg():
 
 def add_stumps_content():
     for n_est in [100, 200, 300, 500, 1000]:
-        for purity_param in np.arange(5, 100, step=5):
+        for purity_param in np.arange(100, 450, step=10):
             models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
             (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
+        for purity_param in np.arange(10, 100, step=5):
+            models_dict['adaboost_stumps_' + str(n_est) + '_0' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
-add_logreg()
-add_stumps()
-add_stumps_slower()
+#add_logreg()
+#add_stumps()
+#add_stumps_slower()
 add_stumps_content()

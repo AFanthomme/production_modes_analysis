@@ -1,5 +1,6 @@
 *.idea
 pip
+temp.py
 logs
 saves/classifiers
 saves/predictions
