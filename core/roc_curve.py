@@ -10,93 +10,51 @@ decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
 
-def add_stumps(base_dict = {}):
-    for n_est in [100, 200, 300, 500, 1000]:
-        for purity_param in np.arange(45, 100, step=5):
-            base_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
-    return base_dict
-
-def add_logreg(base_dict = {}):
-    for n_est in [50, 100, 200]:
-        for purity_param in np.arange(10, 70, step=10):
-            base_dict['adaboost_logreg_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(LogisticRegression(solver='newton-cg', multi_class='ovr', n_jobs=8),
-                                n_estimators=n_est), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
-    return base_dict
-
-def add_stumps_slower(base_dict={}):
-    for n_est in [300, 500, 1000]:
-        for purity_param in np.arange(45, 100, step=5):
-            base_dict['adaslow03_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3), [float(purity_param) / 10., 1., 1., 1., 1., 1., 1.])
-    return base_dict
-
-
-def add_stumps_content(base_dict={}):
-    for n_est in [100, 200, 300, 500, 1000]:
-        for purity_param in np.arange(100, 450, step=10):
-            base_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-        for purity_param in np.arange(0, 100, step=5):
-            base_dict['adaboost_stumps_' + str(n_est) + '_0' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-    return base_dict
-
 def custom_roc():
     extension = '_nomass'
-    stumps_dict = add_stumps_content(add_stumps()).keys()
-    logreg_dict = add_logreg().keys()
-    slow_stumps_dict = add_stumps_slower().keys()
- 
-    available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in  os.listdir('saves/classifiers/')]
-    stumps_dict = [s for s in stumps_dict if (s + extension) in available_models]
-    slow_stumps_dict = [s for s in slow_stumps_dict if (s + extension) in available_models]
-    logreg_dict = [s for s in logreg_dict if (s + extension) in available_models]
+    available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if
+                        full_name.split('_')[-1] == 'acceptance.txt']
 
-
+    stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaboost_stumps']
+    slow_stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaslow03_stumps']
 
     p.figure()
     p.xlim(0., 1.)
     p.ylim(0., 1.)
     p.xlabel('Specificity')
     p.ylabel('Acceptance')
-    p.title('Specifity vs Acceptance in VBF category with featureset ' + extension)
+    p.title('Specifity vs Acceptance in VBF category with featureset ' + extension + '\n')
 
-    acceptance = 0.47
-    purity = 0.37
-    p.scatter(purity, acceptance, marker='*', c='b', s=(10)**2, label='Legacy Mor17 2j only')
+    # acceptance = 0.47
+    # specificity = 0.37
+    # p.scatter(specificity, acceptance, marker='*', c='b', s=10**2, label='Legacy Mor17 2j only')
     acceptance = 0.73
-    purity = 0.15
-    p.scatter(purity, acceptance, marker='*', c='r', s=(10)**2, label='Legacy Mor17 1j and 2j')
+    specificity = 0.15
+    p.scatter(specificity, acceptance, marker='*', c='r', s=10**2, label='Legacy Mor17 1j and 2j')
 
-    for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
+    for n_est, symbol in zip([100, 300, 500], ['o', 'v', '^']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1] for name in plop])
-        purities = np.array([np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1] for name in plop])
-        scores = purities + acceptances
+        specificities = np.array([np.loadtxt('saves/metrics/' + name + extension + '_specificity.txt')[1] for name in plop])
+        scores = specificities + acceptances
         best_candidate = np.argmax(scores)
         content_plot(plop[best_candidate], save=True)
-#        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
-#        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
-        p.scatter(purities, acceptances, marker=symbol, c='b', label=str(n_est) + 'slower stumps')
+        p.scatter(specificities, acceptances, marker=symbol, c='b', label=str(n_est) + 'slower stumps')
 
     for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
         plop = [model for model in stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
         acceptances = [np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1] for name in plop]
-        purities = [np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1] for name in plop]
-#        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')[1:]) for name in plop]
-#        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')[1:]) for name in plop]
-        p.scatter(purities, acceptances, marker=symbol, c='r', label=str(n_est) + ' stumps')
-#
+        specificities = [np.loadtxt('saves/metrics/' + name + extension + '_specificity.txt')[1] for name in plop]
+        p.scatter(specificities, acceptances, marker=symbol, c='r', label=str(n_est) + ' stumps')
+
 #    for n_est, symbol in zip([50, 100, 200], ['o', 'v', '^']):
 #        plop = [model for model in logreg_dict if (model.split('_')[2] == str(n_est))]
 #        plop.sort()
-#        purities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_purity.txt')) for name in plop]
+#        specificities = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_specificity.txt')) for name in plop]
 #        acceptances = [np.mean(np.loadtxt('saves/metrics/' + name + extension + '_acceptance.txt')) for name in plop]
-#        p.scatter(purities, acceptances, marker=symbol, c='g', label=str(n_est) + ' logregs')
+#        p.scatter(specificities, acceptances, marker=symbol, c='g', label=str(n_est) + ' logregs')
 
     p.legend(loc=1)
     p.savefig('saves/figs/full_roc')

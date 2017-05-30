@@ -28,12 +28,8 @@ calculated_features = {
 
 # For each feature selection mode, (to get from root file, to calculate, to remove)
 features_specs = [(base_features, calculated_features, None),
-                  (base_features, calculated_features, likelihood_names),
-                  (base_features, None, None),
                   (base_features, calculated_features, likelihood_names + ['ZZMass']),
-                  (base_features, None, likelihood_names),
                   (base_features, None, likelihood_names + ['ZZMass']),
-                  (base_features, None, ['ZZMass']),
                   ]
 
 
@@ -42,12 +38,7 @@ def remove_fields(a, *fields_to_remove):
 
 
 def get_background_files(modes=(0, 1, 2)):
-    """
-    For now, only one background so no need to merge backgrounds
 
-    :param modes:
-    :return:
-    """
     for features_mode in modes:
         directory, suffix = dir_suff_dict[features_mode]
 
@@ -384,7 +375,7 @@ def clean_intermediate_files(modes=(0, 1, 2)):
                 os.remove(directory + file_name)
 
 
-def full_process(modes=tuple(range(7))):
+def full_process(modes=tuple(range(3))):
     logging.info('Reading root files')
     read_root_files(modes)
     logging.info('Merging vector modes')

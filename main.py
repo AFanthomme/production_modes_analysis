@@ -19,19 +19,9 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
-    #pr.full_process((5,))
-    #pr.get_background_files((0, 3))
+    #pr.full_process((0, 1,))
 
-    # if not (tests.common_saves_found() and tests.lengths_consistent()):
-    #     pr.full_process()
-    # if not (tests.common_saves_found() and tests.lengths_consistent()):
-    #     raise UserWarning
-    #legacy.read_root_files()
-    #legacy.get_background_files()
-    #legacy.merge_vector_modes()
-    #legacy.generate_metrics()
-
-    for plop in [3]:
+    for plop in [1]:
         cst.features_set_selector = plop
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         for model_name in cst.models_dict.keys():
