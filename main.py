@@ -37,7 +37,10 @@ if __name__ == "__main__":
             except IOError:
                 logging.info('Generating predictions for ' + model_name + suffix)
                 ctg.generate_predictions(model_name)
-
-            content_plot(model_name)
+            try:
+                open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
+            except IOError:
+                logging.info('Generating metrics for ' + model_name + suffix)
+                content_plot(model_name)
         logging.info('All models studied with features set ' + suffix)
     #roc.main()
