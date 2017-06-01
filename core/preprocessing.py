@@ -39,7 +39,7 @@ def remove_fields(a, *fields_to_remove):
 def post_selection_processing(data_set, features_couple):
     nb_events = np.ma.size(data_set, 0)
     mask = np.ones(nb_events).astype(bool)
-    to_retrieve, to_compute, to_remove = features_couple
+    dont_care, to_compute, to_remove = features_couple
     if to_compute:
         new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
         keys = []
@@ -56,6 +56,9 @@ def post_selection_processing(data_set, features_couple):
             new_features[feature_idx] = plop
             feature_idx += 1
         data_set = rcf.rec_append_fields(data_set, keys, new_features)
+
+    if not np.all(mask):
+        logging.warning('At least one of the calculated features was Inf or NaN')
 
     if to_remove:
         data_set = remove_fields(data_set, *to_remove)
@@ -78,39 +81,12 @@ def get_background_files(modes=(0, 1, 2)):
             weights = tree2array(tree, branches='overallEventWeight', selection=
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
 
-
-            ref_mask = None
-            if features_mode != 0:  # Don't try to load it before it's created
-                ref_mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
-
-
-            # mask = np.ones(nb_events).astype(bool)
-            #
-            # if to_compute:
-            #     new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
-            #     keys = []
-            #     feature_idx = 0
-            #     for key, couple in to_compute.iteritems():
-            #         keys.append(key)
-            #         plop = new_features[feature_idx]
-            #         feature_expression, vars_list = couple
-            #         for event_idx in range(nb_events):
-            #             tmp = feature_expression(*data_set[vars_list][event_idx])
-            #             if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
-            #                 mask[event_idx] = False
-            #             plop[event_idx] = tmp
-            #         new_features[feature_idx] = plop
-            #         feature_idx += 1
-            #     data_set = rcf.rec_append_fields(data_set, keys, new_features)
-
-            if not np.all(mask):
-                warn('At least one of the calculated features was Inf or NaN')
+            data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
 
             if features_mode == 0:
                 np.savetxt(dir_suff_dict[0][0] + background + '_masks.ma', mask)
-
-            if np.any(ref_mask):
-                mask = ref_mask  # mode 0 = _full should give the most restrictive mask
+            else:
+                mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
 
             data_set = data_set[mask]
             weights = weights[mask]
@@ -136,48 +112,22 @@ def read_root_files(modes=(0, 1, 2)):
             rfile = r.TFile(base_path + prod_mode + '125/ZZ4lAnalysis.root')
             tree = rfile.Get('ZZTree/candTree')
 
-            ref_mask = None
-
             if prod_mode not in ['WminusH', 'WplusH', 'ZH']:
                 data_set = tree2array(tree, branches=to_retrieve, selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
                 weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
-                nb_events = np.ma.size(data_set, 0)
 
-                if features_mode != 0:  # Don't try to load it before it's created
-                    ref_mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma').astype(bool)
-
-                mask = np.ones(nb_events).astype(bool)
-                if to_compute:
-                    new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
-                    keys = []
-                    feature_idx = 0
-                    for key, couple in to_compute.iteritems():
-                        keys.append(key)
-                        plop = new_features[feature_idx]
-                        feature_expression, vars_list = couple
-                        for event_idx in range(nb_events):
-                            tmp = feature_expression(*data_set[vars_list][event_idx])
-                            if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
-                                mask[event_idx] = False
-                            plop[event_idx] = tmp
-                        new_features[feature_idx] = plop
-                        feature_idx += 1
-                    data_set = rcf.rec_append_fields(data_set, keys, new_features)
-
-                if not np.all(mask):
-                    logging.warning('At least one of the calculated features was Inf or NaN')
-                if np.any(ref_mask):
-                    mask = ref_mask  # mode 0 = _full should give the most restrictive mask
-                data_set = data_set[mask]
-                weights = weights[mask]
-
-                if to_remove:
-                    data_set = remove_fields(data_set, *to_remove)
+                data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                 if features_mode == 0:
-                    np.savetxt(directory + prod_mode + '_masks.ma', mask)
+                    np.savetxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma', mask)
+                else:
+                    mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma').astype(bool)
+
+                data_set = data_set[mask]
+                weights = weights[mask]
+                nb_events = np.ma.size(data_set, 0)
 
                 np.savetxt(directory + prod_mode + '_training.txt', data_set[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_test.txt', data_set[nb_events // 2:])
@@ -191,45 +141,21 @@ def read_root_files(modes=(0, 1, 2)):
                                   '_met': ' && (genExtInfo == 12 || genExtInfo == 14 || genExtInfo == 16)'}
 
                 for decay in decay_criteria.keys():
-                    if features_mode != 0:  # Don't try to load it before it's created
-                        ref_mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
-
                     data_set = tree2array(tree, branches=to_retrieve, selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
                     weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
 
-                    nb_events = np.ma.size(data_set, 0)
-                    mask = np.ones(nb_events).astype(bool)
-                    if to_compute:
-                        new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
-                        keys = []
-                        feature_idx = 0
-                        for key, couple in to_compute.iteritems():
-                            keys.append(key)
-                            plop = new_features[feature_idx]
-                            feature_expression, vars_list = couple
-                            for event_idx in range(nb_events):
-                                tmp = feature_expression(*data_set[vars_list][event_idx])
-                                if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
-                                    mask[event_idx] = False
-                                plop[event_idx] = tmp
-                            new_features[feature_idx] = plop
-                            feature_idx += 1
-                        data_set = rcf.rec_append_fields(data_set, keys, new_features)
-
-                    if not np.all(mask):
-                        logging.warning('At least one of the calculated features was Inf or NaN')
-                    if np.any(ref_mask):
-                        mask = ref_mask  # mode 0 = _full should give the most restrictive mask
-                    data_set = data_set[mask]
-                    weights = weights[mask]
-
-                    if  to_remove:
-                        data_set = remove_fields(data_set, *to_remove)
+                    data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                     if features_mode == 0:
-                        np.savetxt(directory + prod_mode + decay + '_masks.ma', mask)
+                        np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
+                    else:
+                        mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
+
+                    data_set = data_set[mask]
+                    weights = weights[mask]
+                    nb_events = np.ma.size(data_set, 0)
 
                     np.savetxt(directory + prod_mode + decay + '_training.txt', data_set[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
@@ -243,46 +169,21 @@ def read_root_files(modes=(0, 1, 2)):
                                   '_met': ' && (genExtInfo == 12 || genExtInfo == 14 || genExtInfo == 16)'}
 
                 for decay in decay_criteria.keys():
-                    if features_mode != 0:  # Don't try to load it before it's created
-                        ref_mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
-
                     data_set = tree2array(tree, branches=to_retrieve, selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
                     weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
 
-                    nb_events = np.ma.size(data_set, 0)
-                    mask = np.ones(nb_events).astype(bool)
-                    if to_compute:
-                        new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
-                        keys = []
-                        feature_idx = 0
-                        for key, couple in to_compute.iteritems():
-                            keys.append(key)
-                            plop = new_features[feature_idx]
-                            feature_expression, vars_list = couple
-                            for event_idx in range(nb_events):
-                                tmp = feature_expression(*data_set[vars_list][event_idx])
-                                if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
-                                    mask[event_idx] = False
-                                plop[event_idx] = tmp
-                            new_features[feature_idx] = plop
-                            feature_idx += 1
-                        data_set = rcf.rec_append_fields(data_set, keys, new_features)
+                    data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
 
-                    if not np.all(mask):
-                        logging.warning('At least one of the calculated features was Inf or NaN')
-                    if np.any(ref_mask):
-                        mask = ref_mask  # mode 0 = _full should give the most restrictive mask
+                    if features_mode == 0:
+                        np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
+                    else:
+                        mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
 
                     data_set = data_set[mask]
                     weights = weights[mask]
-
-                    if  to_remove:
-                        data_set = remove_fields(data_set, *to_remove)
-
-                    if features_mode == 0:
-                        np.savetxt(directory + prod_mode + decay + '_masks.ma', mask)
+                    nb_events = np.ma.size(data_set, 0)
 
                     np.savetxt(directory + prod_mode + decay + '_training.txt', data_set[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
@@ -302,6 +203,7 @@ def merge_vector_modes(modes=(0, 1, 2)):
             test_set = np.loadtxt(file_list[0] + '_test.txt')
             weights_train = np.loadtxt(file_list[0] + '_weights_training.txt')
             weights_test = np.loadtxt(file_list[0] + '_weights_test.txt')
+
             # Rescale the events weights to have common cross_sections & event numbers equal to the ones of WplusH
             for idx, filename in enumerate(file_list[1:]):
                 temp_train = np.loadtxt(filename + '_training.txt')
@@ -398,7 +300,7 @@ def clean_intermediate_files(modes=(0, 1, 2)):
                 os.remove(directory + file_name)
 
 
-def full_process(modes=tuple(range(3))):
+def full_process(modes=tuple(range(2))):
     logging.info('Reading root files')
     read_root_files(modes)
     logging.info('Merging vector modes')
