@@ -6,6 +6,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as p
 from core.evaluation import content_plot
 import os
+import logging
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
@@ -72,20 +73,15 @@ def check_weight_influence():
     for n_est, symbol in zip([500], ['o']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
+        # for lop in plop:
+        #     print(lop)
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
-        p.scatter(specificities, acceptances, marker=symbol, cm=cm.autumn, label=str(n_est) + 'slower stumps')
-
-    for n_est, symbol in zip([100, 200, 300, 500], ['o', 'v', '^', 'x']):
-        plop = [model for model in stumps_dict if (model.split('_')[2] == str(n_est))]
-        plop.sort()
-        acceptances = [np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop]
-        specificities = [np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop]
-        p.scatter(specificities, acceptances, marker=symbol, c='r', label=str(n_est) + ' stumps')
+        p.scatter(specificities, acceptances, marker=symbol, c=range(len(acceptances)) ,cmap=cm.autumn, label=str(n_est) + ' slower stumps')
 
     p.legend(loc=1)
     p.savefig('saves/figs/full_roc')
-
+    p.show()
 
 
 
@@ -104,9 +100,9 @@ def find_best_model():
         specificities = specificities[mask]
 
         max_acceptance = np.max(acceptances)
-        mask_2 = acceptances > 0.9 * max_acceptance
+        mask_2 = acceptances > 0.97 * max_acceptance
         models = models[mask_2]
-
+    print(models) 
     for model in models :
         content_plot('_'.join(model.split('_')[:-1]), save=True)
 
