@@ -35,7 +35,7 @@ def custom_roc():
         plop.sort()
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
-        scores = specificities# + acceptances
+        #scores = specificities + acceptances
         best_candidate = np.argmax(scores)
         content_plot('_'.join(plop[best_candidate].split('_')[:-1]), save=True)
         p.scatter(specificities, acceptances, marker=symbol, c='b', label=str(n_est) + 'slower stumps')
