@@ -36,6 +36,31 @@ features_specs = [(base_features, calculated_features, None),
 def remove_fields(a, *fields_to_remove):
     return a[[name for name in a.dtype.names if name not in fields_to_remove]]
 
+def post_selection_processing(data_set, features_couple):
+    nb_events = np.ma.size(data_set, 0)
+    mask = np.ones(nb_events).astype(bool)
+    to_retrieve, to_compute, to_remove = features_couple
+    if to_compute:
+        new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
+        keys = []
+        feature_idx = 0
+        for key, couple in to_compute.iteritems():
+            keys.append(key)
+            plop = new_features[feature_idx]
+            feature_expression, vars_list = couple
+            for event_idx in range(nb_events):
+                tmp = feature_expression(*data_set[vars_list][event_idx])
+                if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
+                    mask[event_idx] = False
+                plop[event_idx] = tmp
+            new_features[feature_idx] = plop
+            feature_idx += 1
+        data_set = rcf.rec_append_fields(data_set, keys, new_features)
+
+    if to_remove:
+        data_set = remove_fields(data_set, *to_remove)
+
+    return data_set, mask
 
 def get_background_files(modes=(0, 1, 2)):
 
@@ -52,30 +77,31 @@ def get_background_files(modes=(0, 1, 2)):
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
             weights = tree2array(tree, branches='overallEventWeight', selection=
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
-            nb_events = np.ma.size(data_set, 0)
+
 
             ref_mask = None
             if features_mode != 0:  # Don't try to load it before it's created
                 ref_mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
 
-            mask = np.ones(nb_events).astype(bool)
 
-            if to_compute:
-                new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
-                keys = []
-                feature_idx = 0
-                for key, couple in to_compute.iteritems():
-                    keys.append(key)
-                    plop = new_features[feature_idx]
-                    feature_expression, vars_list = couple
-                    for event_idx in range(nb_events):
-                        tmp = feature_expression(*data_set[vars_list][event_idx])
-                        if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
-                            mask[event_idx] = False
-                        plop[event_idx] = tmp
-                    new_features[feature_idx] = plop
-                    feature_idx += 1
-                data_set = rcf.rec_append_fields(data_set, keys, new_features)
+            # mask = np.ones(nb_events).astype(bool)
+            #
+            # if to_compute:
+            #     new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
+            #     keys = []
+            #     feature_idx = 0
+            #     for key, couple in to_compute.iteritems():
+            #         keys.append(key)
+            #         plop = new_features[feature_idx]
+            #         feature_expression, vars_list = couple
+            #         for event_idx in range(nb_events):
+            #             tmp = feature_expression(*data_set[vars_list][event_idx])
+            #             if np.isnan(tmp) or np.isinf(tmp) or np.isneginf(tmp):
+            #                 mask[event_idx] = False
+            #             plop[event_idx] = tmp
+            #         new_features[feature_idx] = plop
+            #         feature_idx += 1
+            #     data_set = rcf.rec_append_fields(data_set, keys, new_features)
 
             if not np.all(mask):
                 warn('At least one of the calculated features was Inf or NaN')
@@ -88,9 +114,6 @@ def get_background_files(modes=(0, 1, 2)):
 
             data_set = data_set[mask]
             weights = weights[mask]
-
-            if to_remove:
-                data_set = remove_fields(data_set, *to_remove)
 
             np.savetxt(directory + background + '.dst', data_set)
             np.savetxt(directory + background + '_weights.wgt', weights)
