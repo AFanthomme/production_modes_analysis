@@ -83,9 +83,6 @@ def check_weight_influence():
         plop.sort()
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
-        mask = acceptances > 0.12
-	specificities = specificities[mask]
-        acceptances = acceptances[mask]
         p.scatter(specificities, acceptances, marker=symbol, c=range(len(acceptances)) ,cmap=cm.autumn, label=str(n_est) + ' slower stumps')
 
     p.legend(loc=1)
@@ -111,7 +108,7 @@ def find_best_model():
         max_acceptance = np.max(acceptances)
         mask_2 = acceptances > 0.97 * max_acceptance
         models = models[mask_2]
-    print(models) 
+    #print(models) 
     for model in models :
         content_plot('_'.join(model.split('_')[:-1]), save=True)
 
