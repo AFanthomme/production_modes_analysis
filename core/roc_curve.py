@@ -78,11 +78,14 @@ def check_weight_influence():
     specificity = 0.15
     p.scatter(specificity, acceptance, marker='o', c='gr', s=10**2, label='Legacy Mor17 1j and 2j')
 
-    for n_est, symbol in zip([1000], ['o']):
+    for n_est, symbol in zip([300], ['o']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
+        mask = acceptances > 0.12
+	specificities = specificities[mask]
+        acceptances = acceptances[mask]
         p.scatter(specificities, acceptances, marker=symbol, c=range(len(acceptances)) ,cmap=cm.autumn, label=str(n_est) + ' slower stumps')
 
     p.legend(loc=1)
@@ -115,8 +118,8 @@ def find_best_model():
 
 
 def main():
-    custom_roc()
-    #check_weight_influence()
+    #custom_roc()
+    check_weight_influence()
     #find_best_model()
 
 
