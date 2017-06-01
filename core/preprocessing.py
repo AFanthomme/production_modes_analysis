@@ -93,7 +93,7 @@ def get_background_files(modes=(0, 1, 2)):
 
             np.savetxt(directory + background + '.dst', data_set)
             np.savetxt(directory + background + '_weights.wgt', weights)
-            logging.info(background + ' weights, training and test sets successfully stored in saves/' + directory)
+            logging.info(background + ' weights, training and test sets successfully stored in ' + directory)
 
 
 
@@ -133,7 +133,7 @@ def read_root_files(modes=(0, 1, 2)):
                 np.savetxt(directory + prod_mode + '_test.txt', data_set[nb_events // 2:])
                 np.savetxt(directory + prod_mode + '_weights_training.txt', weights[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_weights_test.txt', weights[nb_events // 2:])
-                logging.info(prod_mode + ' weights, training and test sets successfully stored in saves/' + directory)
+                logging.info(prod_mode + ' weights, training and test sets successfully stored in ' + directory)
 
             elif prod_mode == 'ZH':
                 decay_criteria = {'_lept': ' && genExtInfo > 10 && !(genExtInfo == 12 || genExtInfo == 14 || genExtInfo == 16)',
@@ -161,7 +161,7 @@ def read_root_files(modes=(0, 1, 2)):
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
                     np.savetxt(directory + prod_mode + decay + '_weights_training.txt', weights[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_weights_test.txt', weights[nb_events // 2:])
-                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in saves/'
+                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
                                  + directory)
 
             else:
@@ -189,7 +189,7 @@ def read_root_files(modes=(0, 1, 2)):
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
                     np.savetxt(directory + prod_mode + decay + '_weights_training.txt', weights[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_weights_test.txt', weights[nb_events // 2:])
-                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in saves/'
+                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
                                  + directory)
 
 
