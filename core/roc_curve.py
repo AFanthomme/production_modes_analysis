@@ -18,8 +18,8 @@ def custom_roc():
     stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaboost_stumps']
     slow_stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaslow03_stumps']
     p.figure()
-    p.xlim(0., 1.)
-    p.ylim(0., 1.)
+    p.xlim(0.12, 1.)
+    p.ylim(0.12, 1.)
     p.xlabel('Specificity')
     p.ylabel('Acceptance')
     p.title('Specifity vs Acceptance in VBF category with featureset ' + extension + '\n')
@@ -34,8 +34,13 @@ def custom_roc():
     for n_est, symbol in zip([300, 500, 1000], ['o', 'v', '^']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
+
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
+        #mask = acceptances > 0.12
+	#specificities = specificities[mask]
+        #acceptances = acceptances[mask]
+
         p.scatter(specificities, acceptances, marker=symbol, c='b', label=str(n_est) + 'slower stumps')
 
     for n_est, symbol in zip([100, 200, 300, 500], ['o', 'v', '^', 'x']):
@@ -43,6 +48,9 @@ def custom_roc():
         plop.sort()
         acceptances = [np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop]
         specificities = [np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop]
+        #mask = acceptances > 0.12
+	#specificities = specificities[mask]
+        #acceptances = acceptances[mask]
         p.scatter(specificities, acceptances, marker=symbol, c='r', label=str(n_est) + ' stumps')
 
     p.legend(loc=1)
@@ -73,8 +81,6 @@ def check_weight_influence():
     for n_est, symbol in zip([1000], ['o']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
-        # for lop in plop:
-        #     print(lop)
         acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
         specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
         p.scatter(specificities, acceptances, marker=symbol, c=range(len(acceptances)) ,cmap=cm.autumn, label=str(n_est) + ' slower stumps')
@@ -109,9 +115,9 @@ def find_best_model():
 
 
 def main():
-    # custom_roc()
-    check_weight_influence()
-    find_best_model()
+    custom_roc()
+    #check_weight_influence()
+    #find_best_model()
 
 
 if __name__ == "__main__":

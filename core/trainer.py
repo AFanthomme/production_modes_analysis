@@ -17,7 +17,7 @@ def model_training(model_name):
     training_weights = np.loadtxt(directory + 'full_training_weights.wgt')
 
     if model_weights:
-        weights = np.array([model_weights[int(cat)]*training_weights[idx] for idx, cat in enumerate(training_labels)])
+        weights = np.array([model_weights[int(cat)] for idx, cat in enumerate(training_labels)])
         analyser.fit(training_set, training_labels, weights)
     else:
         analyser.fit(training_set, training_labels)

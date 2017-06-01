@@ -27,17 +27,20 @@ if __name__ == "__main__":
         for model_name in cst.models_dict.keys():
             logging.info('Studying model ' + model_name + suffix)
             try:
+                raise IOError
                 open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
             except IOError:
                 logging.info('Training model ' + model_name)
                 ctg.model_training(model_name)
             try:
+                raise IOError
                 open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
                 open('saves/predictions/' + model_name + suffix + '_bkg_predictions.prd', 'rb')
             except IOError:
                 logging.info('Generating predictions for ' + model_name + suffix)
                 ctg.generate_predictions(model_name)
             try:
+                raise IOError
                 open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
             except IOError:
                 logging.info('Generating metrics for ' + model_name + suffix)
