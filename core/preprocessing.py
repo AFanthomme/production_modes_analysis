@@ -1,24 +1,32 @@
-import logging
+'''
+Preprocessing from root to sklearn compatible datasets
+
+Implements all the steps to go from one root file for each production mode to a global scaled training (and test) set 
+with the associated weights, labels, scaler (to be used if inputting new data)
+'''
 import os
+import logging
 import pickle
-from warnings import warn
+from shutil import rmtree
 import ROOT as r
 from root_numpy import tree2array
 import numpy as np
 import numpy.lib.recfunctions as rcf
+from sklearn import preprocessing as pr
 from core.constants import base_features, production_modes, event_numbers, cross_sections, \
     event_categories, likelihood_names, dir_suff_dict, backgrounds
-from shutil import rmtree
-from sklearn import preprocessing as pr
 from core.misc import frozen
 
 
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'
-# This is done here to avoid having root anywhere it doesn't need to be
+
+# Dictionary of calculated quantities names, function and name of the functions arguments (must be event features)
+# TODO : add a protection to avoid possible changes in the ordering (since dictionary...)
 r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
-calculated_features = {
+calculated_features = \
+{
 'DVBF2j_ME': (r.DVBF2j_ME, ['p_JJVBF_SIG_ghv1_1_JHUGen_JECNominal', 'p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
 'DVBF1j_ME' : (r.DVBF1j_ME, ['p_JVBF_SIG_ghv1_1_JHUGen_JECNominal', 'pAux_JVBF_SIG_ghv1_1_JHUGen_JECNominal',
                             'p_JQCD_SIG_ghg2_1_JHUGen_JECNominal', 'ZZMass']),
@@ -33,13 +41,19 @@ features_specs = [(base_features, calculated_features, None),
                   ]
 
 
-def remove_fields(a, *fields_to_remove):
-    return a[[name for name in a.dtype.names if name not in fields_to_remove]]
+def remove_fields(labeled_arr, *fields_to_remove):
+    return labeled_arr[[name for name in labeled_arr.dtype.names if name not in fields_to_remove]]
 
-def post_selection_processing(data_set, features_couple):
+def post_selection_processing(data_set, features_tuple):
+    '''
+    Adds calculated features and removes unwanted ones
+    :param data_set: numpy structured array
+    :param features_tuple: a tuple of labels lists (to retrieve, to compute, to remove)
+    :return: The dataset with the new calculated fields and without the removed ones.
+    '''
     nb_events = np.ma.size(data_set, 0)
     mask = np.ones(nb_events).astype(bool)
-    dont_care, to_compute, to_remove = features_couple
+    dont_care, to_compute, to_remove = features_tuple
     if to_compute:
         new_features = [np.zeros(nb_events) for _ in range(len(to_compute))]
         keys = []
@@ -66,15 +80,19 @@ def post_selection_processing(data_set, features_couple):
     return data_set, mask
 
 def get_background_files(modes=(0, 1, 2)):
+    '''
+    Pre-processes the background files. 
+    For now, only one background, this needs to be modified a bit to add another one.
+    :param modes: 
+    :return: 
+    '''
 
     for features_mode in modes:
         directory, suffix = dir_suff_dict[features_mode]
-
         to_retrieve, to_compute, to_remove = features_specs[features_mode]
         for background in backgrounds:
             rfile = r.TFile(base_path + background + '/ZZ4lAnalysis.root')
             tree = rfile.Get('ZZTree/candTree')
-
 
             data_set = tree2array(tree, branches=to_retrieve, selection=
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
@@ -97,7 +115,13 @@ def get_background_files(modes=(0, 1, 2)):
 
 
 
-def read_root_files(modes=(0, 1, 2)):
+def read_root_files(modes):
+    '''
+    Reads the root files for all production modes defined in constants, and outputs a first set of files 
+    that still need to be merged, scaled, etc...
+    :param modes: the features modes to be used (usually 0, 1, ...)
+    :return: 
+    '''
     for features_mode in modes:
         directory, suffix = dir_suff_dict[features_mode]
 
@@ -106,7 +130,7 @@ def read_root_files(modes=(0, 1, 2)):
         os.makedirs(directory)
         logging.info('Directory ' + directory + ' created')
 
-        to_retrieve, to_compute, to_remove = features_specs[features_mode]
+        to_retrieve, dont_care1, dont_care2 = features_specs[features_mode]
 
         for prod_mode in production_modes:
             rfile = r.TFile(base_path + prod_mode + '125/ZZ4lAnalysis.root')
