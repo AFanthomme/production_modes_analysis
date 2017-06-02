@@ -1,5 +1,10 @@
 *.idea
 pip
+temp.py
 logs
-saves/*
+saves/classifiers
+saves/predictions
+saves/common*
+saves/metrics
+saves/legacy
 !/main.py

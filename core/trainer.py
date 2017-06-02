@@ -14,9 +14,10 @@ def model_training(model_name):
 
     training_set = np.loadtxt(directory + 'full_training_set.dst')
     training_labels = np.loadtxt(directory + 'full_training_labels.lbl')
+    training_weights = np.loadtxt(directory + 'full_training_weights.wgt')
 
     if model_weights:
-        weights = np.array([model_weights[int(cat)] for cat in training_labels])
+        weights = np.array([model_weights[int(cat)] for idx, cat in enumerate(training_labels)])
         analyser.fit(training_set, training_labels, weights)
     else:
         analyser.fit(training_set, training_labels)
@@ -38,10 +39,12 @@ def generate_predictions(model_name):
 
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', mode='rb') as f:
         classifier = pickle.load(f)
+    with open(directory + 'scaler.pkl', mode='rb') as f:
+        scaler = pickle.load(f)
 
     results = classifier.predict(scaled_dataset)
     probas = classifier.predict_proba(scaled_dataset)
-    bkg_results = classifier.predict(background_dataset)
+    bkg_results = classifier.predict(scaler.transform(background_dataset))
 
     out_path = 'saves/predictions/' + model_name + suffix
     np.savetxt(out_path + '_predictions.prd', results)
