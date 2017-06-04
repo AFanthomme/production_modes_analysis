@@ -18,8 +18,8 @@ def custom_roc():
     stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaboost_stumps']
     slow_stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaslow03_stumps']
     p.figure()
-    p.xlim(0.12, 1.)
-    p.ylim(0.12, 1.)
+    p.xlim(0., 1.)
+    p.ylim(0., 1.)
     p.xlabel('Specificity')
     p.ylabel('Acceptance')
     p.title('Specifity vs Acceptance in VBF category with featureset ' + extension + '\n')
@@ -115,8 +115,8 @@ def find_best_model():
 
 
 def main():
-    #custom_roc()
-    check_weight_influence()
+    custom_roc()
+    #check_weight_influence()
     #find_best_model()
 
 
