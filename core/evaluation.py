@@ -6,9 +6,7 @@ import numpy as np
 import core.trainer as ctg
 import core.constants as cst
 
-def content_plot(model_name, save=False):
-    tags_list = copy(cst.event_categories)
-
+def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     model_name += suffix
     suffix += '/'
@@ -40,7 +38,21 @@ def content_plot(model_name, save=False):
     np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
     np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
     np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
-    
+    np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
+
+
+def content_plot(model_name, save=False):
+    tags_list = copy(cst.event_categories)
+    nb_categories = len(cst.event_categories)
+    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    model_name += suffix
+    suffix += '/'
+
+    contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
+    specificity = np.savetxt('saves/metrics/' + model_name + '_specificity.txt')
+    acceptance = np.savetxt('saves/metrics/' + model_name + '_acceptance.txt')
+    bkg_repartition = np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
 
     fig = p.figure()

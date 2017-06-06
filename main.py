@@ -5,7 +5,7 @@ import pickle
 import os
 import core.trainer as ctg
 import core.constants as cst
-from core.evaluation import content_plot
+import core.evaluation as evl
 from core import assertions
 from core import legacy
 import core.preprocessing as pr
@@ -19,7 +19,12 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
-    #pr.full_process((0, 1,))
+    try:
+        # raise IOError
+        open('saves/common_nomass/full_test_set.dst')
+    except IOError:
+        logging.info('Preprocessing datasets (might take some time)')
+        pr.full_process((0, 1,))
 
     for plop in [1]:
         cst.features_set_selector = plop
@@ -31,7 +36,10 @@ if __name__ == "__main__":
                 open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
             except IOError:
                 logging.info('Training model ' + model_name)
-                ctg.model_training(model_name)
+                if model_name[0] == 'a':
+                    ctg.model_training(model_name)
+                elif model_name[0] == 'x':
+                    ctg.train_xgcd(model_name)
             try:
                 #raise IOError
                 open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
@@ -44,6 +52,6 @@ if __name__ == "__main__":
                 open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
             except IOError:
                 logging.info('Generating metrics for ' + model_name + suffix)
-                content_plot(model_name, save=True)
+                evl.calculate_metrics(model_name)
         logging.info('All models studied with features set ' + suffix)
     #roc.main()
