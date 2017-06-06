@@ -101,5 +101,5 @@ def add_slow_stumps():
             (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
-
-add_xgdb()
+# Don't forget to change the names in the dict to get a comparison !
+#add_xgdb()
