@@ -49,9 +49,9 @@ def content_plot(model_name, save=False):
     suffix += '/'
 
     contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
-    specificity = np.savetxt('saves/metrics/' + model_name + '_specificity.txt')
-    acceptance = np.savetxt('saves/metrics/' + model_name + '_acceptance.txt')
-    bkg_repartition = np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+    specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
+    acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+    bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
 
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
 

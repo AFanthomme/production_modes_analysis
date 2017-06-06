@@ -11,16 +11,18 @@ import pandas as pd
 import matplotlib.pylab as plt
 from sklearn.model_selection import GridSearchCV
 
+with open('saves/common_nomass/scaler.pkl', 'rb') as f:
+    nomass_scaler = pickle.load(f)
+
 train = pd.read_table('saves/common_nomass/full_training_set.dst',sep=None, names=cst.features_names_xgdb, header=None)
 train_label = np.loadtxt('saves/common_nomass/full_training_labels.lbl')
 train['prod_mode'] = train_label
 test = pd.read_table('saves/common_nomass/full_test_set.dst',sep=None, names=cst.features_names_xgdb, header=None)
 test_label = np.loadtxt('saves/common_nomass/full_test_labels.lbl')
-test['prod_mode'] = test_label
-
 target = 'prod_mode'
 predictors = [x for x in train.columns if x not in [target]]
-
+#xgtest = xgb.DMatrix(train[predictors].values, label=train[target].values)
+bkg = pd.DataFrame(nomass_scaler.transform(np.loadtxt('saves/common_nomass/ZZTo4l.dst')), columns=cst.features_names_xgdb)
 
 def model_training(model_name):
     models_dict = copy(cst.models_dict)
@@ -52,29 +54,35 @@ def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
     suffix = '_nomass'
     xgb_param = alg.get_xgb_params()
     weights = np.array([class_weights[int(cat)] for cat in train_label])
-    xgtrain = xgb.DMatrix(train[predictors].values, label=train[target].values, weights=weights)
+    xgtrain = xgb.DMatrix(train[predictors].values, label=train[target].values, weight=weights)
     cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
-                      stratified=True, metrics='merror', early_stopping_rounds=early_stopping_rounds, verbose_eval=2)
+                      stratified=True, metrics='merror', early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
     alg.set_params(n_estimators=cvresult.shape[0])
-    alg.fit(train[predictors], train[target], eval_metric='merror')
-
+    logging.info('Number of boosting rounds optimized')
+    alg.fit(train[predictors], train[target], eval_metric='merror', sample_weight=weights)
+    logging.info('Model fit')
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'wb') as f:
         pickle.dump(alg, f)
 
 
 def generate_predictions(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    scaled_dataset = np.loadtxt(directory + 'full_test_set.dst')
-    background_dataset = np.loadtxt(directory + 'ZZTo4l.dst')
-
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', mode='rb') as f:
         classifier = pickle.load(f)
     with open(directory + 'scaler.pkl', mode='rb') as f:
         scaler = pickle.load(f)
 
-    results = classifier.predict(scaled_dataset)
-    probas = classifier.predict_proba(scaled_dataset)
-    bkg_results = classifier.predict(scaler.transform(background_dataset))
+    if model_name[0] == 'a':
+        scaled_dataset = np.loadtxt(directory + 'full_test_set.dst')
+        background_dataset = np.loadtxt(directory + 'ZZTo4l.dst')
+        results = classifier.predict(scaled_dataset)
+        probas = classifier.predict_proba(scaled_dataset)
+        bkg_results = classifier.predict(scaler.transform(background_dataset))
+    elif model_name[0] == 'x':
+        results = classifier.predict(test)
+        probas = classifier.predict_proba(test)
+        bkg_results = classifier.predict(bkg)
+
 
     out_path = 'saves/predictions/' + model_name + suffix
     np.savetxt(out_path + '_predictions.prd', results)

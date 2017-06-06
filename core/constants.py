@@ -87,10 +87,13 @@ def add_stumps():
             (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 def add_xgdb():
-    for purity_param in np.arange(100, 400, step=20):
+    for purity_param in np.arange(100, 1000, step=50):
         models_dict['xgb' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-
+    for purity_param in np.arange(100, 200, step=20):
+        models_dict['xgb' + '_' + str(purity_param)] = \
+            (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
+    
 def add_slow_stumps():
     for n_est in [300, 500, 1000]:
         for purity_param in np.arange(100, 300, step=10):
