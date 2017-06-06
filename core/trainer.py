@@ -51,7 +51,7 @@ def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
     alg, class_weights = cst.models_dict[model_name]
     suffix = '_nomass'
     xgb_param = alg.get_xgb_params()
-    weights = class_weights
+    weights = np.array([class_weights[int(cat)] for cat in train_label])
     xgtrain = xgb.DMatrix(train[predictors].values, label=train[target].values, weights=weights)
     cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
                       stratified=True, metrics='merror', early_stopping_rounds=early_stopping_rounds, verbose_eval=2)
