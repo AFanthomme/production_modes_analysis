@@ -64,16 +64,16 @@ backgrounds = ['ZZTo4l']
 
 
 xgb_base = XGBClassifier(
-     learning_rate =0.1,
+     learning_rate =0.04,
      n_estimators=1000,
-     max_depth=3,
-     min_child_weight=3,
+     max_depth=4,
+     min_child_weight=4,
      gamma=0,
      subsample=0.8,
      colsample_bytree=0.8,
      objective= 'multi:softmax',
-     num_class=8,
-     n_jobs=12,
+     num_class=7,
+     n_jobs=16,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
@@ -88,10 +88,10 @@ def add_stumps():
 
 def add_xgdb():
     for purity_param in np.arange(100, 1000, step=50):
-        models_dict['xgb' + '_' + str(purity_param)] = \
+        models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
     for purity_param in np.arange(100, 200, step=20):
-        models_dict['xgb' + '_' + str(purity_param)] = \
+        models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
     
 def add_slow_stumps():
@@ -102,4 +102,4 @@ def add_slow_stumps():
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 # Don't forget to change the names in the dict to get a comparison !
-#add_xgdb()
+add_xgdb()
