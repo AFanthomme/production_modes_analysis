@@ -1,6 +1,6 @@
 import logging
 import os
-import pickle
+import cPickle as pickle
 import numpy as np
 import core.constants as cst
 from core.misc import frozen

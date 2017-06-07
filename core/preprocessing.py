@@ -6,7 +6,7 @@ with the associated weights, labels, scaler (to be used if inputting new data)
 '''
 import os
 import logging
-import pickle
+import cPickle as pickle
 from shutil import rmtree
 import ROOT as r
 from root_numpy import tree2array
@@ -114,7 +114,8 @@ def get_background_files(modes=(0, 1, 2)):
             np.savetxt(directory + background + '_weights.wgt', weights)
             logging.info(background + ' weights, training and test sets successfully stored in ' + directory)
 
-def identify_final_state(Z1_flav, Z2_flav, merge_mixed_states=True):
+def identify_final_state(couple, merge_mixed_states=True):
+    Z1_flav, Z2_flav = couple['Z1Flav'], couple['Z2Flav'] 
     if Z1_flav == Z2_flav:
         if Z1_flav == -121:
             return 'fs4e'
@@ -170,9 +171,8 @@ def read_root_files(modes):
                 np.savetxt(directory + prod_mode + '_weights_test.txt', weights[nb_events // 2:])
 
 
-                blob = data_set['Z1Flav', 'Z2Flav']
-                plop = np.vectorize(identify_final_state)
-                final_states = plop(blob)
+                blob = data_set[['Z1Flav', 'Z2Flav']]
+                final_states = np.apply_along_axis(identify_final_state, 0, blob)
 
                 np.savetxt(directory + prod_mode + '_training_finalstates.txt', final_states[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_test_finalstates.txt', final_states[nb_events // 2:])
@@ -209,9 +209,8 @@ def read_root_files(modes):
                                  + directory)
 
 
-                    blob = data_set['Z1Flav', 'Z2Flav']
-                    plop = np.vectorize(identify_final_state)
-                    final_states = plop(blob)
+                    blob = data_set[['Z1Flav', 'Z2Flav']]
+                    final_states = np.apply_along_axis(identify_final_state, 0, blob)
 
                     np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
@@ -245,10 +244,8 @@ def read_root_files(modes):
                                  + directory)
 
 
-                    blob = data_set['Z1Flav', 'Z2Flav']
-                    plop = np.vectorize(identify_final_state)
-                    final_states = plop(blob)
-
+                    blob = data_set[['Z1Flav', 'Z2Flav']]
+                    final_states = np.apply_along_axis(identify_final_state, 0, blob)
                     np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
 

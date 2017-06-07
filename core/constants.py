@@ -73,7 +73,7 @@ xgb_base = XGBClassifier(
      colsample_bytree=0.8,
      objective= 'multi:softmax',
      num_class=7,
-     n_jobs=16,
+     n_jobs=8,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)

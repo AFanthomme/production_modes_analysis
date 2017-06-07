@@ -5,7 +5,7 @@ import matplotlib.pyplot as p
 import numpy as np
 import core.trainer as ctg
 import core.constants as cst
-import pickle
+import cPickle as pickle
 import pandas as pd
 from core.constants import features_names_xgdb
 
