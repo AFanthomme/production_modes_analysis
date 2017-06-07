@@ -114,18 +114,13 @@ def get_background_files(modes=(0, 1, 2)):
             np.savetxt(directory + background + '_weights.wgt', weights)
             logging.info(background + ' weights, training and test sets successfully stored in ' + directory)
 
-def identify_final_state(couple, merge_mixed_states=True):
-    Z1_flav, Z2_flav = couple['Z1Flav'], couple['Z2Flav'] 
-    if Z1_flav == Z2_flav:
-        if Z1_flav == -121:
-            return 'fs4e'
-        else:
-            return 'fs4mu'
-    else:
-        if Z1_flav == -121 or merge_mixed_states:
-            return 'fs2e2mu'
-        else:
-            return 'fs2mu2e'
+
+def identify_final_state(Z1_flavarr, Z2_flavarr):
+    tmp = 2. * np.ones_like(Z1_flavarr) # 2e2mu as a basis
+    tmp[np.logical_and(Z1_flavarr == Z2_flavarr, Z1_flavarr == -121)] = 0 # 4 electrons
+    tmp[np.logical_and(Z1_flavarr == Z2_flavarr, Z1_flavarr != -121)] = 1  # 4 muons
+    return tmp
+
 
 def read_root_files(modes):
     '''
@@ -170,9 +165,9 @@ def read_root_files(modes):
                 np.savetxt(directory + prod_mode + '_weights_training.txt', weights[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_weights_test.txt', weights[nb_events // 2:])
 
-
-                blob = data_set[['Z1Flav', 'Z2Flav']]
-                final_states = np.apply_along_axis(identify_final_state, 0, blob)
+                blob1 = data_set[['Z1Flav']]
+                blob2 = data_set[['Z2Flav']]
+                final_states = identify_final_state(blob1, blob2)
 
                 np.savetxt(directory + prod_mode + '_training_finalstates.txt', final_states[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_test_finalstates.txt', final_states[nb_events // 2:])
@@ -209,8 +204,9 @@ def read_root_files(modes):
                                  + directory)
 
 
-                    blob = data_set[['Z1Flav', 'Z2Flav']]
-                    final_states = np.apply_along_axis(identify_final_state, 0, blob)
+                    blob1 = data_set[['Z1Flav']]
+                    blob2 = data_set[['Z2Flav']]
+                    final_states = identify_final_state(blob1, blob2)
 
                     np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
@@ -243,9 +239,10 @@ def read_root_files(modes):
                     logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
                                  + directory)
 
+                    blob1 = data_set[['Z1Flav']]
+                    blob2 = data_set[['Z2Flav']]
+                    final_states = identify_final_state(blob1, blob2)
 
-                    blob = data_set[['Z1Flav', 'Z2Flav']]
-                    final_states = np.apply_along_axis(identify_final_state, 0, blob)
                     np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
 
