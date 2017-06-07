@@ -17,6 +17,7 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
+    evl.feature_importance_plot('xgb_200')
 
     try:
         # raise IOError

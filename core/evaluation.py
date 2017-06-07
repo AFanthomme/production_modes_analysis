@@ -5,6 +5,9 @@ import matplotlib.pyplot as p
 import numpy as np
 import core.trainer as ctg
 import core.constants as cst
+import pickle
+import pandas as pd
+from core.constants import features_names_xgdb
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -141,6 +144,16 @@ def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):
         p.savefig('saves/hists/' + model_name + '_' + discriminant + '_' + suffix[:-1] + '.png')
 
 
+def feature_importance_plot(model_name):
+    directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb') as f:
+        classifier = pickle.load(f)
 
-
+    feat_imp = pd.Series(classifier.feature_importances_).sort_values(ascending=False)
+    ordering = np.argsort(-classifier.feature_importances_)
+    ax = feat_imp.plot(kind='bar', title='Feature Importances')
+    p.ylabel('Feature Importance Score for model ' + model_name + suffix)
+    ax.set_xticklabels(features_names_xgdb[ordering])
+    p.show()
+    p.savefig('saves/figs/feature_importance.png')
 

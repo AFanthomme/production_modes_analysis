@@ -27,7 +27,7 @@ if ignore_warnings:
     warnings.filterwarnings('ignore')
 
 dir_suff_dict = [('saves/common_full/', '_full'), ('saves/common_nomass/', '_nomass'),
-                 ('saves/common_nothing/', '_nothing')
+                 ('saves/common_flavors/', '_flavors')
                 ]
 
 production_modes = ['ggH', 'VBFH', 'WminusH', 'WplusH', 'ZH', 'ttH', 'bbH']
