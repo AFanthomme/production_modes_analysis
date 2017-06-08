@@ -152,11 +152,13 @@ def feature_importance_plot(model_name):
         features_names_xgdb = np.append(cst.features_names_xgdb, ['Z1_Flav', 'Z2_Flav'])
     else:  
         features_names_xgdb = cst.features_names_xgdb
+        features_names_xgdb[2] = 'nb_jets'
+        features_names_xgdb[3] = 'nb_b_jets'
+        
     feat_imp = pd.Series(classifier.feature_importances_).sort_values(ascending=False)
     ordering = np.argsort(-classifier.feature_importances_)
-    ax = feat_imp.plot(kind='bar', title='Feature Importances')
-    p.ylabel('Feature Importance Score for model ' + model_name + suffix)
-    ax.set_xticklabels(features_names_xgdb[ordering])
-    p.show()
+    ax = feat_imp.plot(kind='bar', title='Features relative importance')
+    ax.set_xticklabels(features_names_xgdb[ordering], rotation=30, fontsize=8)
+    #p.show()
     p.savefig('saves/figs/feature_importance.png')
 
