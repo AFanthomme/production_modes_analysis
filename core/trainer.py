@@ -11,21 +11,23 @@ import pandas as pd
 import matplotlib.pylab as plt
 from sklearn.model_selection import GridSearchCV
 
-with open('saves/common_nomass/scaler.pkl', 'rb') as f:
-    nomass_scaler = pickle.load(f)
-
 
 def prepare_xgdb():
     global train, test, predictors, target, bkg, current_feature_set, train_label, test_label
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    train = pd.read_table(directory + 'full_training_set.dst',sep=None, names=cst.features_names_xgdb, header=None)
+    features_names_xgdb = cst.features_names_xgdb
+    if cst.features_set_selector == 2:
+        features_names_xgdb = np.append(features_names_xgdb, ['Z1_Flav', 'Z2_Flav'])
+    train = pd.read_table(directory + 'full_training_set.dst',sep=None, names=features_names_xgdb, header=None)
     train_label = np.loadtxt(directory + 'full_training_labels.lbl')
     train['prod_mode'] = train_label
-    test = pd.read_table(directory + 'full_test_set.dst',sep=None, names=cst.features_names_xgdb, header=None)
+    test = pd.read_table(directory + 'full_test_set.dst',sep=None, names=features_names_xgdb, header=None)
     test_label = np.loadtxt(directory + 'full_test_labels.lbl')
     target = 'prod_mode'
+    with open(directory + 'scaler.pkl', 'rb') as f:
+        scaler = pickle.load(f)
     predictors = [x for x in train.columns if x not in [target]]
-    bkg = pd.DataFrame(nomass_scaler.transform(np.loadtxt(directory + 'ZZTo4l.dst')), columns=cst.features_names_xgdb)
+    bkg = pd.DataFrame(scaler.transform(np.loadtxt(directory + 'ZZTo4l.dst')), columns=features_names_xgdb)
     current_feature_set = cst.features_set_selector
 
 def model_training(model_name):

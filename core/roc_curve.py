@@ -23,7 +23,7 @@ def custom_roc():
     p.ylim(0., 1.)
     p.xlabel('Specificity')
     p.ylabel('Acceptance')
-    p.title('Specifity vs Acceptance in VBF category with featureset ' + extension + '\n')
+    p.title('Specifity vs Acceptance in the VBF category' + '\n')
 
     acceptance = 0.47
     specificity = 0.37
@@ -32,7 +32,7 @@ def custom_roc():
     specificity = 0.15
     p.scatter(specificity, acceptance, marker='o', c='gr', s=10**2, label='Legacy Mor17 1j and 2j')
 
-    for n_est, symbol in zip([500], ['o']):
+    for n_est, symbol in zip([500], ['x']):
         plop = [model for model in slow_stumps_dict if (model.split('_')[2] == str(n_est))]
         plop.sort()
 
@@ -55,15 +55,15 @@ def custom_roc():
   #      p.scatter(specificities, acceptances, marker=symbol, c='r', label=str(n_est) + ' stumps')
 
     
-    plop = [model for model in available_models if (model.split('_')[0] == 'xgb')]
-    plop.sort()
-    acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
-    specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
-    coefs = np.polyfit(specificities, acceptances, 3)
-    pol = np.poly1d(coefs)
-    fit_range = np.linspace(np.min(specificities), np.max(specificities), 1024)
-    p.scatter(specificities, acceptances, marker='x', c='r', label='xGDB trees')
-    p.plot(fit_range, pol(fit_range), c='r') 
+   # plop = [model for model in available_models if (model.split('_')[0] == 'xgb')]
+   # plop.sort()
+   # acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
+   # specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
+   # coefs = np.polyfit(specificities, acceptances, 3)
+   # pol = np.poly1d(coefs)
+   # fit_range = np.linspace(np.min(specificities), np.max(specificities), 1024)
+   # p.scatter(specificities, acceptances, marker='x', c='r', label='xGDB trees')
+   # p.plot(fit_range, pol(fit_range), c='r') 
     
     
     plop = [model for model in available_models if (model.split('_')[0] == 'xgbslow')]
@@ -73,8 +73,8 @@ def custom_roc():
     coefs = np.polyfit(specificities, acceptances, 3)
     pol = np.poly1d(coefs)
     fit_range = np.linspace(np.min(specificities), np.max(specificities), 1024)
-    p.scatter(specificities, acceptances, marker='x', c='0.75', label='xGDB trees optimized')
-    p.plot(fit_range, pol(fit_range), c='0.75') 
+    p.scatter(specificities, acceptances, marker='o', c='r', label='xGDB trees')
+    p.plot(fit_range, pol(fit_range), c='r') 
 
     p.legend(loc=1)
     p.savefig('saves/figs/full_roc')

@@ -101,11 +101,16 @@ def get_background_files(modes=(0, 1, 2)):
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
 
             data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
-
+            
             if features_mode == 0:
                 np.savetxt(dir_suff_dict[0][0] + background + '_masks.ma', mask)
             else:
                 mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
+
+            blob1 = data_set[['Z1Flav']]
+            blob2 = data_set[['Z2Flav']]
+            final_states = identify_final_state(blob1, blob2)
+            np.savetxt(directory + background + '_finalstates.dst', final_states)
 
             data_set = data_set[mask]
             weights = weights[mask]
@@ -116,9 +121,11 @@ def get_background_files(modes=(0, 1, 2)):
 
 
 def identify_final_state(Z1_flavarr, Z2_flavarr):
-    tmp = 2. * np.ones_like(Z1_flavarr) # 2e2mu as a basis
+    assert np.ma.size(Z1_flavarr) == np.ma.size(Z2_flavarr) 
+    assert np.ma.size(Z1_flavarr) > 0
+    tmp =  np.ones(len(Z1_flavarr)) # 2e2mu as a basis
     tmp[np.logical_and(Z1_flavarr == Z2_flavarr, Z1_flavarr == -121)] = 0 # 4 electrons
-    tmp[np.logical_and(Z1_flavarr == Z2_flavarr, Z1_flavarr != -121)] = 1  # 4 muons
+    tmp[np.logical_and(Z1_flavarr == Z2_flavarr, Z1_flavarr != -121)] = 2  # 4 muons
     return tmp
 
 
@@ -165,12 +172,12 @@ def read_root_files(modes):
                 np.savetxt(directory + prod_mode + '_weights_training.txt', weights[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_weights_test.txt', weights[nb_events // 2:])
 
-                blob1 = data_set[['Z1Flav']]
-                blob2 = data_set[['Z2Flav']]
+                blob1 = data_set[['Z1Flav']].tolist()
+                blob2 = data_set[['Z2Flav']].tolist()
                 final_states = identify_final_state(blob1, blob2)
 
-                np.savetxt(directory + prod_mode + '_training_finalstates.txt', final_states[:nb_events // 2])
-                np.savetxt(directory + prod_mode + '_test_finalstates.txt', final_states[nb_events // 2:])
+                np.savetxt(directory + prod_mode + '_finalstates_training.txt', final_states[:nb_events // 2])
+                np.savetxt(directory + prod_mode + '_finalstates_test.txt', final_states[nb_events // 2:])
 
                 logging.info(prod_mode + ' weights, training and test sets successfully stored in ' + directory)
 
@@ -204,12 +211,12 @@ def read_root_files(modes):
                                  + directory)
 
 
-                    blob1 = data_set[['Z1Flav']]
-                    blob2 = data_set[['Z2Flav']]
+                    blob1 = data_set[['Z1Flav']].tolist()
+                    blob2 = data_set[['Z2Flav']].tolist()
                     final_states = identify_final_state(blob1, blob2)
 
-                    np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
-                    np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
+                    np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', final_states[:nb_events // 2])
+                    np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', final_states[nb_events // 2:])
 
             else:
                 decay_criteria = {'_lept': ' && genExtInfo > 10', '_hadr': ' && genExtInfo < 10',
@@ -238,13 +245,15 @@ def read_root_files(modes):
                     np.savetxt(directory + prod_mode + decay + '_weights_test.txt', weights[nb_events // 2:])
                     logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
                                  + directory)
-
-                    blob1 = data_set[['Z1Flav']]
-                    blob2 = data_set[['Z2Flav']]
-                    final_states = identify_final_state(blob1, blob2)
-
-                    np.savetxt(directory + prod_mode + decay + '_training_finalstates.txt', final_states[:nb_events // 2])
-                    np.savetxt(directory + prod_mode + decay + '_test_finalstates.txt', final_states[nb_events // 2:])
+                    if np.ma.size(data_set[['Z1Flav']]) != 0:
+                        blob1 = data_set[['Z1Flav']].tolist()
+                        blob2 = data_set[['Z2Flav']].tolist()
+                        final_states = identify_final_state(blob1, blob2)
+                        np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', final_states[:nb_events // 2])
+                        np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', final_states[nb_events // 2:])
+                    else:
+                        np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', [])
+                        np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', [])
 
 
 def merge_vector_modes(modes=(0, 1, 2)):
@@ -257,8 +266,8 @@ def merge_vector_modes(modes=(0, 1, 2)):
             test_set = np.loadtxt(file_list[0] + '_test.txt')
             weights_train = np.loadtxt(file_list[0] + '_weights_training.txt')
             weights_test = np.loadtxt(file_list[0] + '_weights_test.txt')
-            finalstates_train = np.loadtxt(file_list[0] + '_training_finalstates.txt')
-            finalstates_test = np.loadtxt(file_list[0] + '_test_finalstates.txt')
+            finalstates_train = np.loadtxt(file_list[0] + '_finalstates_training.txt')
+            finalstates_test = np.loadtxt(file_list[0] + '_finalstates_test.txt')
 
             # Rescale the events weights to have common cross_sections & event numbers equal to the ones of WplusH
             for idx, filename in enumerate(file_list[1:]):
@@ -266,8 +275,8 @@ def merge_vector_modes(modes=(0, 1, 2)):
                 temp_test = np.loadtxt(filename + '_test.txt')
                 temp_weights_train = np.loadtxt(filename + '_weights_training.txt')
                 temp_weights_test = np.loadtxt(filename + '_weights_test.txt')
-                temp_finalstates_train = np.loadtxt(filename + '_training_finalstates.txt')
-                temp_finalstates_test = np.loadtxt(filename + '_test_finalstates.txt')
+                temp_finalstates_train = np.loadtxt(filename + '_finalstates_training.txt')
+                temp_finalstates_test = np.loadtxt(filename + '_finalstates_test.txt')
 
                 temp_weights_train *= event_numbers['WplusH'] / event_numbers[filename.split('/')[-1].split('_')[0]]
                 temp_weights_test *= event_numbers['WplusH'] / event_numbers[filename.split('/')[-1].split('_')[0]]
@@ -376,7 +385,7 @@ def clean_intermediate_files(modes=(0, 1, 2)):
 
 def full_process(modes=tuple(range(2))):
     logging.info('Reading root files')
-    read_root_files(modes)
+    #read_root_files(modes)
     logging.info('Merging vector modes')
     merge_vector_modes(modes)
     logging.info('Preparing scalers')

@@ -78,7 +78,7 @@ def content_plot(model_name, save=False):
                            color=color_array[gen_mode])
             tmp += normalized_content[gen_mode]
         ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{P} = $' +
+                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{S} = $' +
                 str(np.round(specificity[category], 3)) + r'$; \mathcal{A} =$' + str(np.round(acceptance[category], 3))
                 , fontsize=16, color='w')
 
@@ -148,7 +148,10 @@ def feature_importance_plot(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb') as f:
         classifier = pickle.load(f)
-
+    if cst.features_set_selector == 2:
+        features_names_xgdb = np.append(cst.features_names_xgdb, ['Z1_Flav', 'Z2_Flav'])
+    else:  
+        features_names_xgdb = cst.features_names_xgdb
     feat_imp = pd.Series(classifier.feature_importances_).sort_values(ascending=False)
     ordering = np.argsort(-classifier.feature_importances_)
     ax = feat_imp.plot(kind='bar', title='Feature Importances')
