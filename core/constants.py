@@ -80,26 +80,25 @@ decision_stump = DecisionTreeClassifier(max_depth=1)
 
 models_dict = {}
 
-def add_stumps():
-    for n_est in [100, 200, 300, 500]:
-        for purity_param in np.arange(100, 300, step=10):
-            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est), [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 def add_xgdb():
     for purity_param in np.arange(100, 1000, step=50):
         models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-    for purity_param in np.arange(100, 200, step=20):
+    for purity_param in np.arange(100, 300, step=10):
         models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
     
-def add_slow_stumps():
-    for n_est in [300, 500, 1000]:
+def add_stumps():
+    for n_est in [500, 1000]:
+        for purity_param in np.arange(100, 1000, step=50):
+            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=1.),
+             [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
         for purity_param in np.arange(100, 300, step=10):
-            models_dict['adaslow03_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
+            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=1.),
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
-# Don't forget to change the names in the dict to get a comparison !
 add_xgdb()
+add_stumps()

@@ -1,27 +1,16 @@
 '''  '''
-
-import warnings
-import pandas as pd
 import warnings
 warnings.filterwarnings('ignore')
 import numpy as np
 import xgboost as xgb
 from xgboost.sklearn import XGBClassifier
-from sklearn import cross_validation, metrics   #Additional scklearn functions
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score   #Perforing grid search
-import logging
-from matplotlib.pylab import rcParams
-rcParams['figure.figsize'] = 12, 4
+from sklearn.model_selection import GridSearchCV
 import os
-import time
-import pickle
-os.environ['PATH'] = os.environ['PATH'] + ';C:\\Program Files\\mingw-w64\\x86_64-5.3.0-posix-seh-rt_v4-rev0\\mingw64\\bin'
 import core.trainer as t
-
+os.environ['PATH'] = os.environ['PATH'] + \
+                     ';C:\\Program Files\\mingw-w64\\x86_64-5.3.0-posix-seh-rt_v4-rev0\\mingw64\\bin'
 
 event_categories = np.array(['ggH', 'VBFH', 'VH_hadr', 'VH_lept','ZH_met', 'ttH', 'bbH'])
-
-
 
 xgb_base = XGBClassifier(
      learning_rate =0.1,
@@ -35,7 +24,6 @@ xgb_base = XGBClassifier(
      num_class=7,
      n_jobs=12,
      )
-
 
 # Start by finding the best number of estimors for given learning rate.  
 # This step could be performed after each tuning
@@ -63,7 +51,7 @@ def grid_search():
     print(gsearch1.best_params_)
     print(gsearch1.best_score_)
 
-grid_search()
+# grid_search()
 
 # Change min_child_weight and max_depth
 xgb_base = XGBClassifier(
@@ -79,5 +67,5 @@ xgb_base = XGBClassifier(
      n_jobs=12,
      )
 
-explore_basics()
+# explore_basics()
 

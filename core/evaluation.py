@@ -108,8 +108,6 @@ def content_plot(model_name, save=False):
     p.close(fig2)
 
 def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):
-    tags_list = copy(cst.event_categories)
-
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     suffix += '/'
     directory = 'saves/' + model_name + suffix
@@ -123,8 +121,6 @@ def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):
     weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
 
     predictions = np.loadtxt(directory + 'predictions.txt')
-
-    nb_categories = len(cst.event_categories)
 
     for idx, true_cat, predicted_cat, rescaled_weight in enumerate(izip(true_categories, predictions, weights)):
         right_indices = []
@@ -161,6 +157,15 @@ def feature_importance_plot(model_name):
     ordering = np.argsort(-classifier.feature_importances_)
     ax = feat_imp.plot(kind='bar', title='Features relative importance')
     ax.set_xticklabels(features_names_xgdb[ordering], rotation=30, fontsize=8)
-    #p.show()
     p.savefig('saves/figs/feature_importance.png')
 
+def print_latex(model_name):
+    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    model_name += suffix
+    suffix += '/'
+
+    table = pd.read_table('saves/metrics/' + model_name + '_contentstable.txt', header=None, names=cst.event_categories,
+                          )
+    table['Inclusive'] = table.sum(axis=1)
+    table.index= cst.event_categories
+    print(table.to_latex())
