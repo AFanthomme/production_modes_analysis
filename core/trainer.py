@@ -6,10 +6,8 @@ import core.constants as cst
 from core.misc import frozen
 from copy import deepcopy as copy
 import xgboost as xgb
-from xgboost.sklearn import XGBClassifier
 import pandas as pd
-import matplotlib.pylab as plt
-from sklearn.model_selection import GridSearchCV
+
 
 
 def prepare_xgdb():

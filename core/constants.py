@@ -93,11 +93,11 @@ def add_stumps():
     for n_est in [500, 1000]:
         for purity_param in np.arange(100, 1000, step=50):
             models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=1.),
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
         for purity_param in np.arange(100, 300, step=10):
             models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=1.),
+            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 add_xgdb()
