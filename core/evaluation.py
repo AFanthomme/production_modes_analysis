@@ -86,6 +86,8 @@ def content_plot(model_name, save=False):
     p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
     if save:
         fig.savefig('saves/figs/' + model_name + '_content_plot.png')
+    else:
+        p.show()
     p.close(fig) 
 
     fig2 = p.figure(2)

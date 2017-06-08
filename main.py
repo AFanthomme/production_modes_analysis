@@ -18,8 +18,8 @@ if cst.ignore_warnings:
 
 if __name__ == "__main__":
     #pr.get_background_files((0, 2,))
-    evl.feature_importance_plot('xgbslow_200')
-    evl.content_plot('xgbslow_200', save=True)
+    #evl.feature_importance_plot('xgbslow_900')
+    evl.content_plot('xgbslow_900', True)
     exit()
     try:
         #raise IOError
