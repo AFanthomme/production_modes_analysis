@@ -360,9 +360,9 @@ def clean_intermediate_files(modes=(0, 1, 2)):
                 os.remove(directory + file_name)
 
 
-def full_process(modes=tuple(range(2))):
+def full_process(modes=tuple(range(2)), m_range=['118', '130']):
     logging.info('Reading root files')
-    read_root_files(modes)
+    read_root_files(modes, m_range)
     logging.info('Merging vector modes')
     merge_vector_modes(modes)
     logging.info('Preparing scalers')
@@ -370,7 +370,7 @@ def full_process(modes=tuple(range(2))):
     logging.info('Merging and scaling datasets')
     make_scaled_datasets(modes)
     logging.info('Getting background files')
-    get_background_files(modes)
+    get_background_files(modes, m_range)
     logging.info('Removing all intermediate files')
     clean_intermediate_files(modes)
 
