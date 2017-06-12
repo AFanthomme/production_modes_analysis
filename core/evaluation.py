@@ -44,7 +44,7 @@ def calculate_metrics(model_name):
     np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
 
 def make_pretty_table(model_name):
-    fs_labels = ['4e', '2e2mu', '4mu']
+    fs_labels = ['_4e', '_2e2mu', '_4mu']
 
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     model_name += suffix
@@ -57,9 +57,10 @@ def make_pretty_table(model_name):
     weights_ref = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
     predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
     final_states = np.loadtxt('saves/common' + suffix + 'full_test_finalstates.dst').astype(int)
-    bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-
+    bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
+    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
+    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates.dst').astype(int)
+    bkg_weights_ref *= cst.cross_sections['ZZTo4l'] * 0.5 / cst.event_numbers['ZZTo4l']
     nb_categories = len(cst.event_categories)
     nb_processes = nb_categories + 1   # Consider all background at once
 
@@ -69,14 +70,20 @@ def make_pretty_table(model_name):
         true_categories = true_categories_ref[mask_fs]
         weights = weights_ref[mask_fs]
         predictions = predictions_ref[mask_fs]
+       
+        bkg_mask_fs = np.where(bkg_final_states == fs_idx)
+        bkg_weights = bkg_weights_ref[bkg_mask_fs]
+        bkg_predictions = bkg_predictions_ref[bkg_mask_fs]
 
         for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
             contents_table[predicted_tag, true_tag] += rescaled_weight
 
         for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
             contents_table[predicted_tag, -1] += rescaled_weight
-
+        
         contents_table *= cst.luminosity
+
+        contents_table = np.around(contents_table, 3)
         row_labels = [cat + '_tagged' for cat in cst.event_categories]
         col_labels = cst.event_categories + ['ZZ4l']
         dataframe = pd.DataFrame(contents_table, index=row_labels, columns=col_labels)
