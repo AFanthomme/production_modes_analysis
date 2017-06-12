@@ -16,9 +16,12 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
-    pr.get_background_files((0, 1))
+    # pr.get_background_files((0, 1))
+    evl.make_pretty_table('xgboost_200')
+    exit()
+
     try:
-        raise IOError
+        # raise IOError
         open('saves/common_nomass/full_test_set.dst')
     except IOError:
         logging.info('Preprocessing datasets (might take some time)')

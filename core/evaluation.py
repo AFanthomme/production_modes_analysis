@@ -43,6 +43,52 @@ def calculate_metrics(model_name):
     np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
     np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
 
+def make_pretty_table(model_name):
+    fs_labels = ['4e', '2e2mu', '4mu']
+
+    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    model_name += suffix
+    suffix += '/'
+
+    if not os.path.isdir('saves/tables_latex/'):
+        os.makedirs('saves/tables_latex')
+
+    true_categories_ref = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
+    weights_ref = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
+    predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
+    final_states = np.loadtxt('saves/common/' + suffix + 'full_test_finalstates.dst').astype(int)
+    bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
+    bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
+
+    nb_categories = len(cst.event_categories)
+    nb_processes = nb_categories + 1   # Consider all background at once
+
+    for fs_idx, fs_label in enumerate(fs_labels):
+        contents_table = np.zeros((nb_categories, nb_processes))
+        mask_fs = np.where(final_states == fs_idx)
+        true_categories = true_categories_ref[mask_fs]
+        weights = weights_ref[mask_fs]
+        predictions = predictions_ref[mask_fs]
+
+        for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
+            contents_table[predicted_tag, true_tag] += rescaled_weight
+
+        for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
+            contents_table[predicted_tag, -1] += rescaled_weight
+
+        contents_table *= cst.luminosity
+        row_labels = [cat + '_tagged' for cat in cst.event_categories]
+        col_labels = cst.event_categories + ['ZZ4l']
+        dataframe = pd.DataFrame(contents_table, index=row_labels, columns=col_labels)
+        pretty_table = dataframe.to_latex()
+        print(pretty_table)
+        with open('saves/pretty_tables/' + model_name + fs_label, 'w') as f:
+            f.write(pretty_table)
+
+
+
+
+
 
 def content_plot(model_name, save=False):
     tags_list = copy(cst.event_categories)
