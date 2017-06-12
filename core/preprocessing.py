@@ -91,7 +91,7 @@ def get_background_files(modes=(0, 1, 2)):
     :param modes: 
     :return: 
     '''
-
+    plop=0
     for features_mode in modes:
         directory, suffix = cst.dir_suff_dict[features_mode]
         to_retrieve, to_compute, to_remove = features_specs[features_mode]
