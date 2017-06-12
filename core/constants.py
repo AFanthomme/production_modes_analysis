@@ -23,6 +23,20 @@ os.environ['PATH'] = os.environ['PATH'] + ';C:\\Program Files\\mingw-w64\\x86_64
 # modify preprocessing.py
 features_set_selector = 1
 
+
+if not os.path.isdir('saves/classifiers'):
+    os.makedirs('saves/classifiers')
+
+if not os.path.isdir('saves/figs'):
+    os.makedirs('saves/figs')
+
+if not os.path.isdir('saves/metrics'):
+    os.makedirs('saves/metrics')
+
+if not os.path.isdir('saves/predictions'):
+    os.makedirs('saves/predictions')
+
+
 if ignore_warnings:
     warnings.filterwarnings('ignore')
 
@@ -64,7 +78,7 @@ backgrounds = ['ZZTo4l']
 
 
 xgb_base = XGBClassifier(
-     learning_rate =0.04,
+     learning_rate =0.1,
      n_estimators=1000,
      max_depth=4,
      min_child_weight=4,
@@ -101,4 +115,4 @@ def add_stumps():
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 add_xgdb()
-add_stumps()
+#add_stumps()

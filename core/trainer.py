@@ -9,7 +9,6 @@ import xgboost as xgb
 import pandas as pd
 
 
-
 def prepare_xgdb():
     global train, test, predictors, target, bkg, current_feature_set, train_label, test_label
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -59,8 +58,9 @@ def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
         current_feature_set = -1
 
     if cst.features_set_selector != current_feature_set:
-        logging.info('Recomputing datasets with new feature set')
+        logging.info('Reloading datasets with new feature set')
         prepare_xgdb()
+        logging.info('	New dataset loaded')
 
     alg, class_weights = cst.models_dict[model_name]
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
