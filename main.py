@@ -16,8 +16,8 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
-    # pr.get_background_files((0, 1))
-    evl.make_pretty_table('xgboost_200')
+    pr.get_background_files((0, 1))
+    evl.make_pretty_table('xgb_200')
     exit()
 
     try:
