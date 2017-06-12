@@ -38,7 +38,6 @@ calculated_features = \
 features_specs = [(base_features + ['Z1Flav', 'Z2Flav'], calculated_features, None),
                   (base_features + ['Z1Flav', 'Z2Flav'], calculated_features, likelihood_names + ['ZZMass']
                    + ['Z1Flav', 'Z2Flav']),
-                  (base_features + ['Z1Flav', 'Z2Flav'], calculated_features, likelihood_names + ['ZZMass']),
                   ]
 
 
@@ -239,7 +238,7 @@ def read_root_files(modes):
 
 
 
-def merge_vector_modes(modes=(0, 1, 2)):
+def merge_vector_modes(modes=(0, 1)):
     for mode in modes:
         directory, no_care = dir_suff_dict[mode]
         for decay in ['_lept', '_hadr']:
@@ -282,7 +281,7 @@ def merge_vector_modes(modes=(0, 1, 2)):
     logging.info('Merged data successfully generated')
 
 
-def prepare_scalers(modes=(0, 1, 2)):
+def prepare_scalers(modes=(0, 1)):
     gen_modes_int = event_categories
     for mode in modes:
         directory, no_care = dir_suff_dict[mode]
@@ -368,13 +367,15 @@ def clean_intermediate_files(modes=(0, 1, 2)):
 
 def full_process(modes=tuple(range(2))):
     logging.info('Reading root files')
-    #read_root_files(modes)
+    read_root_files(modes)
     logging.info('Merging vector modes')
     merge_vector_modes(modes)
     logging.info('Preparing scalers')
     prepare_scalers(modes)
     logging.info('Merging and scaling datasets')
     make_scaled_datasets(modes)
+    logging.info('Getting background files')
+    get_background_files(modes)
     logging.info('Removing all intermediate files')
     clean_intermediate_files(modes)
 

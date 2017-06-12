@@ -16,14 +16,13 @@ if cst.ignore_warnings:
 
 
 if __name__ == "__main__":
-    pr.get_background_files((0, 1, 2,))
-
+    pr.get_background_files((0, 1))
     try:
-        #raise IOError
+        raise IOError
         open('saves/common_nomass/full_test_set.dst')
     except IOError:
         logging.info('Preprocessing datasets (might take some time)')
-        pr.full_process((0, 2,))
+        pr.full_process((0, 1,))
 
     for plop in [1]:
         cst.features_set_selector = plop
