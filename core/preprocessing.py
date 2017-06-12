@@ -75,10 +75,14 @@ def post_selection_processing(data_set, features_tuple):
     if not np.all(mask):
         logging.warning('At least one of the calculated features was Inf or NaN')
 
+    blob1 = data_set[['Z1Flav']].astype(int)
+    blob2 = data_set[['Z2Flav']].astype(int)
+    final_states = identify_final_state(blob1, blob2)
+
     if to_remove:
         data_set = remove_fields(data_set, *to_remove)
 
-    return data_set, mask
+    return data_set, final_states, mask
 
 def get_background_files(modes=(0, 1, 2)):
     '''
@@ -100,23 +104,20 @@ def get_background_files(modes=(0, 1, 2)):
             weights = tree2array(tree, branches='overallEventWeight', selection=
                         'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
 
-            data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
-            
+            data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
+
             if features_mode == 0:
                 np.savetxt(dir_suff_dict[0][0] + background + '_masks.ma', mask)
             else:
                 mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
 
-            blob1 = data_set[['Z1Flav']]
-            blob2 = data_set[['Z2Flav']]
-            final_states = identify_final_state(blob1, blob2)
-            np.savetxt(directory + background + '_finalstates.dst', final_states)
-
             data_set = data_set[mask]
             weights = weights[mask]
+            final_states = final_states[mask]
 
             np.savetxt(directory + background + '.dst', data_set)
             np.savetxt(directory + background + '_weights.wgt', weights)
+            np.savetxt(directory + background + '_finalstates.dst', final_states)
             logging.info(background + ' weights, training and test sets successfully stored in ' + directory)
 
 
@@ -156,7 +157,7 @@ def read_root_files(modes):
                 weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
 
-                data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
+                data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                 if features_mode == 0:
                     np.savetxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma', mask)
@@ -165,20 +166,16 @@ def read_root_files(modes):
 
                 data_set = data_set[mask]
                 weights = weights[mask]
+                final_states = final_states[mask]
+
                 nb_events = np.ma.size(data_set, 0)
 
                 np.savetxt(directory + prod_mode + '_training.txt', data_set[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_test.txt', data_set[nb_events // 2:])
                 np.savetxt(directory + prod_mode + '_weights_training.txt', weights[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_weights_test.txt', weights[nb_events // 2:])
-
-                blob1 = data_set[['Z1Flav']].tolist()
-                blob2 = data_set[['Z2Flav']].tolist()
-                final_states = identify_final_state(blob1, blob2)
-
                 np.savetxt(directory + prod_mode + '_finalstates_training.txt', final_states[:nb_events // 2])
                 np.savetxt(directory + prod_mode + '_finalstates_test.txt', final_states[nb_events // 2:])
-
                 logging.info(prod_mode + ' weights, training and test sets successfully stored in ' + directory)
 
             elif prod_mode == 'ZH':
@@ -192,7 +189,7 @@ def read_root_files(modes):
                     weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
 
-                    data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
+                    data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                     if features_mode == 0:
                         np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
@@ -201,26 +198,19 @@ def read_root_files(modes):
 
                     data_set = data_set[mask]
                     weights = weights[mask]
+                    final_states = final_states[mask]
                     nb_events = np.ma.size(data_set, 0)
 
                     np.savetxt(directory + prod_mode + decay + '_training.txt', data_set[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
                     np.savetxt(directory + prod_mode + decay + '_weights_training.txt', weights[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_weights_test.txt', weights[nb_events // 2:])
-                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
-                                 + directory)
-
-
-                    blob1 = data_set[['Z1Flav']].tolist()
-                    blob2 = data_set[['Z2Flav']].tolist()
-                    final_states = identify_final_state(blob1, blob2)
-
+                    logging.info(prod_mode + decay + ' weights, training and test sets stored in ' + directory)
                     np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', final_states[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', final_states[nb_events // 2:])
 
             else:
-                decay_criteria = {'_lept': ' && genExtInfo > 10', '_hadr': ' && genExtInfo < 10',
-                                  '_met': ' && (genExtInfo == 12 || genExtInfo == 14 || genExtInfo == 16)'}
+                decay_criteria = {'_lept': ' && genExtInfo > 10', '_hadr': ' && genExtInfo < 10'}
 
                 for decay in decay_criteria.keys():
                     data_set = tree2array(tree, branches=to_retrieve, selection=
@@ -228,8 +218,7 @@ def read_root_files(modes):
                     weights = tree2array(tree, branches='overallEventWeight', selection=
                             'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
 
-                    data_set, mask = post_selection_processing(data_set, features_specs[features_mode])
-
+                    data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
                     if features_mode == 0:
                         np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
                     else:
@@ -237,23 +226,17 @@ def read_root_files(modes):
 
                     data_set = data_set[mask]
                     weights = weights[mask]
+                    final_states = final_states[mask]
                     nb_events = np.ma.size(data_set, 0)
 
                     np.savetxt(directory + prod_mode + decay + '_training.txt', data_set[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_test.txt', data_set[nb_events // 2:])
                     np.savetxt(directory + prod_mode + decay + '_weights_training.txt', weights[:nb_events // 2])
                     np.savetxt(directory + prod_mode + decay + '_weights_test.txt', weights[nb_events // 2:])
-                    logging.info(prod_mode + decay + ' weights, training and test sets successfully stored in '
-                                 + directory)
-                    if np.ma.size(data_set[['Z1Flav']]) != 0:
-                        blob1 = data_set[['Z1Flav']].tolist()
-                        blob2 = data_set[['Z2Flav']].tolist()
-                        final_states = identify_final_state(blob1, blob2)
-                        np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', final_states[:nb_events // 2])
-                        np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', final_states[nb_events // 2:])
-                    else:
-                        np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', [])
-                        np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', [])
+                    np.savetxt(directory + prod_mode + decay + '_finalstates_training.txt', final_states[:nb_events // 2])
+                    np.savetxt(directory + prod_mode + decay + '_finalstates_test.txt', final_states[nb_events // 2:])
+                    logging.info(prod_mode + decay + ' weights, training and test sets stored in ' + directory)
+
 
 
 def merge_vector_modes(modes=(0, 1, 2)):
