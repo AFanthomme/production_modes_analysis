@@ -13,9 +13,10 @@ from root_numpy import tree2array
 import numpy as np
 import numpy.lib.recfunctions as rcf
 from sklearn import preprocessing as pr
-from core.constants import base_features, production_modes, event_numbers, cross_sections, \
-    event_categories, likelihood_names, dir_suff_dict, backgrounds
+# from core.constants import base_features, production_modes, event_numbers, cross_sections, \
+#     event_categories, likelihood_names, dir_suff_dict, backgrounds
 from core.misc import frozen
+import core.constants as cst
 
 
 # Common part of the path to retrieve the root files
@@ -35,8 +36,8 @@ calculated_features = \
 }
 
 # For each feature selection mode, (to get from root file, to calculate, to remove)
-features_specs = [(base_features + ['Z1Flav', 'Z2Flav'], calculated_features, None),
-                  (base_features + ['Z1Flav', 'Z2Flav'], calculated_features, likelihood_names + ['ZZMass']
+features_specs = [(cst.base_features + ['Z1Flav', 'Z2Flav'], calculated_features, None),
+                  (cst.base_features + ['Z1Flav', 'Z2Flav'], calculated_features, cst.likelihood_names + ['ZZMass']
                    + ['Z1Flav', 'Z2Flav']),
                   ]
 
@@ -92,9 +93,9 @@ def get_background_files(modes=(0, 1, 2)):
     '''
 
     for features_mode in modes:
-        directory, suffix = dir_suff_dict[features_mode]
+        directory, suffix = cst.dir_suff_dict[features_mode]
         to_retrieve, to_compute, to_remove = features_specs[features_mode]
-        for background in backgrounds:
+        for background in cst.backgrounds:
             rfile = r.TFile(base_path + background + '/ZZ4lAnalysis.root')
             tree = rfile.Get('ZZTree/candTree')
 
@@ -106,13 +107,15 @@ def get_background_files(modes=(0, 1, 2)):
             data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
             if features_mode == 0:
-                np.savetxt(dir_suff_dict[0][0] + background + '_masks.ma', mask)
+                np.savetxt(cst.dir_suff_dict[0][0] + background + '_masks.ma', mask)
             else:
-                mask = np.loadtxt(dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
+                mask = np.loadtxt(cst.dir_suff_dict[0][0] + background + '_masks.ma').astype(bool)
 
             data_set = data_set[mask]
             weights = weights[mask]
             final_states = final_states[mask]
+
+            weights *= cst.cross_sections[background] / cst.event_numbers[background]
 
             np.savetxt(directory + background + '.dst', data_set)
             np.savetxt(directory + background + '_weights.wgt', weights)
@@ -137,7 +140,7 @@ def read_root_files(modes):
     :return: 
     '''
     for features_mode in modes:
-        directory, suffix = dir_suff_dict[features_mode]
+        directory, suffix = cst.dir_suff_dict[features_mode]
 
         if os.path.isdir(directory):
             rmtree(directory)
@@ -146,7 +149,7 @@ def read_root_files(modes):
 
         to_retrieve, dont_care1, dont_care2 = features_specs[features_mode]
 
-        for prod_mode in production_modes:
+        for prod_mode in cst.production_modes:
             rfile = r.TFile(base_path + prod_mode + '125/ZZ4lAnalysis.root')
             tree = rfile.Get('ZZTree/candTree')
 
@@ -159,9 +162,9 @@ def read_root_files(modes):
                 data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                 if features_mode == 0:
-                    np.savetxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma', mask)
+                    np.savetxt(cst.dir_suff_dict[0][0] + prod_mode + '_masks.ma', mask)
                 else:
-                    mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + '_masks.ma').astype(bool)
+                    mask = np.loadtxt(cst.dir_suff_dict[0][0] + prod_mode + '_masks.ma').astype(bool)
 
                 data_set = data_set[mask]
                 weights = weights[mask]
@@ -191,9 +194,9 @@ def read_root_files(modes):
                     data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
                     if features_mode == 0:
-                        np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
+                        np.savetxt(cst.dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
                     else:
-                        mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
+                        mask = np.loadtxt(cst.dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
 
                     data_set = data_set[mask]
                     weights = weights[mask]
@@ -219,9 +222,9 @@ def read_root_files(modes):
 
                     data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
                     if features_mode == 0:
-                        np.savetxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
+                        np.savetxt(cst.dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma', mask)
                     else:
-                        mask = np.loadtxt(dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
+                        mask = np.loadtxt(cst.dir_suff_dict[0][0] + prod_mode + decay + '_masks.ma').astype(bool)
 
                     data_set = data_set[mask]
                     weights = weights[mask]
@@ -240,7 +243,7 @@ def read_root_files(modes):
 
 def merge_vector_modes(modes=(0, 1)):
     for mode in modes:
-        directory, no_care = dir_suff_dict[mode]
+        directory, no_care = cst.dir_suff_dict[mode]
         for decay in ['_lept', '_hadr']:
             file_list = [directory + mediator + decay for mediator in ['WplusH', 'WminusH', 'ZH']]
 
@@ -260,10 +263,10 @@ def merge_vector_modes(modes=(0, 1)):
                 temp_finalstates_train = np.loadtxt(filename + '_finalstates_training.txt')
                 temp_finalstates_test = np.loadtxt(filename + '_finalstates_test.txt')
 
-                temp_weights_train *= event_numbers['WplusH'] / event_numbers[filename.split('/')[-1].split('_')[0]]
-                temp_weights_test *= event_numbers['WplusH'] / event_numbers[filename.split('/')[-1].split('_')[0]]
-                temp_weights_train *= cross_sections[filename.split('/')[-1].split('_')[0]] / cross_sections['WplusH']
-                temp_weights_test *= cross_sections[filename.split('/')[-1].split('_')[0]] / cross_sections['WplusH']
+                temp_weights_train *= cst.event_numbers['WplusH'] / cst.event_numbers[filename.split('/')[-1].split('_')[0]]
+                temp_weights_test *= cst.event_numbers['WplusH'] / cst.event_numbers[filename.split('/')[-1].split('_')[0]]
+                temp_weights_train *= cst.cross_sections[filename.split('/')[-1].split('_')[0]] / cst.cross_sections['WplusH']
+                temp_weights_test *= cst.cross_sections[filename.split('/')[-1].split('_')[0]] / cst.cross_sections['WplusH']
 
                 training_set = np.concatenate((training_set, temp_train), axis=0)
                 test_set = np.concatenate((test_set, temp_test), axis=0)
@@ -282,9 +285,9 @@ def merge_vector_modes(modes=(0, 1)):
 
 
 def prepare_scalers(modes=(0, 1)):
-    gen_modes_int = event_categories
+    gen_modes_int = cst.event_categories
     for mode in modes:
-        directory, no_care = dir_suff_dict[mode]
+        directory, no_care = cst.dir_suff_dict[mode]
         file_list = [directory + mode for mode in gen_modes_int]
         training_set = np.loadtxt(file_list[0] + '_training.txt')
         test_set = np.loadtxt(file_list[0] + '_test.txt')
@@ -307,33 +310,32 @@ def prepare_scalers(modes=(0, 1)):
 
 def make_scaled_datasets(modes=(0, 1, 2)):
     for mode in modes:
-        directory, no_care = dir_suff_dict[mode]
+        directory, no_care = cst.dir_suff_dict[mode]
         with open(directory + 'scaler.pkl', 'rb') as f:
             scaler = pickle.load(f)
 
-        file_list = [directory + cat for cat in event_categories]
+        file_list = [directory + cat for cat in cst.event_categories]
         training_set = scaler.transform(np.loadtxt(file_list[0] + '_training.txt'))
         test_set = scaler.transform(np.loadtxt(file_list[0] + '_test.txt'))
         np.savetxt(file_list[0] + '_test_scaled.txt', test_set)
         training_labels = np.zeros(np.ma.size(training_set, 0))
         test_labels = np.zeros(np.ma.size(test_set, 0))
         training_weights = np.loadtxt(file_list[0] + '_weights_training.txt') * \
-                  cross_sections[event_categories[0]] / event_numbers[event_categories[0]]
+                           cst.cross_sections[cst.event_categories[0]] / cst.event_numbers[cst.event_categories[0]]
         test_weights = np.loadtxt(file_list[0] + '_weights_test.txt') * \
-                  cross_sections[event_categories[0]] / event_numbers[event_categories[0]]
+                       cst.cross_sections[cst.event_categories[0]] / cst.event_numbers[cst.event_categories[0]]
 
         training_finalstates = np.loadtxt(file_list[0] + '_finalstates_training.txt')
         test_finalstates = np.loadtxt(file_list[0] + '_finalstates_test.txt')
-
 
 
         for idx, filename in enumerate(file_list[1:]):
             temp_train = scaler.transform(np.loadtxt(filename + '_training.txt'))
             temp_test = scaler.transform(np.loadtxt(filename + '_test.txt'))
             tmp_training_weights = np.loadtxt(filename + '_weights_training.txt') * \
-                               cross_sections[filename.split('/')[-1]] / event_numbers[filename.split('/')[-1]]
+                                   cst.cross_sections[filename.split('/')[-1]] / cst.event_numbers[filename.split('/')[-1]]
             tmp_test_weights = np.loadtxt(filename + '_weights_test.txt') * \
-                           cross_sections[filename.split('/')[-1]] / event_numbers[filename.split('/')[-1]]
+                               cst.cross_sections[filename.split('/')[-1]] / cst.event_numbers[filename.split('/')[-1]]
             tmp_training_finalstates = np.loadtxt(filename + '_finalstates_training.txt')
             tmp_test_finalstates = np.loadtxt(filename + '_finalstates_test.txt')
 
@@ -358,7 +360,7 @@ def make_scaled_datasets(modes=(0, 1, 2)):
 
 def clean_intermediate_files(modes=(0, 1, 2)):
     for mode in modes:
-        directory, no_care = dir_suff_dict[mode]
+        directory, no_care = cst.dir_suff_dict[mode]
         files_list = os.listdir(directory)
         for file_name in files_list:
             if file_name.split('.')[-1] not in ['dst', 'pkl', 'lbl', 'wgt']:
