@@ -7,5 +7,10 @@ saves/predictions
 saves/common*
 saves/metrics
 saves/legacy
+saves_narrow/classifiers
+saves_narrow/predictions
+saves_narrow/common*
+saves_narrow/metrics
+saves_narrow/legacy
 !/main.py
 

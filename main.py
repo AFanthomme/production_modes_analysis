@@ -24,7 +24,7 @@ if __name__ == "__main__":
         open('saves/common_nomass/full_test_set.dst')
     except IOError:
         logging.info('Preprocessing datasets (might take some time)')
-        pr.full_process((0, 1,))
+        pr.full_process((0, 1,), m_range=('105', '140'))
 
     for plop in [1]:
         cst.features_set_selector = plop
@@ -48,9 +48,11 @@ if __name__ == "__main__":
                 logging.info('Generating predictions for ' + model_name + suffix)
                 ctg.generate_predictions(model_name)
             try:
-                #raise IOError
+                raise IOError
                 open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
             except IOError:
                 logging.info('Generating metrics for ' + model_name + suffix)
                 evl.calculate_metrics(model_name)
+            evl.make_pretty_table(model_name)
+            evl.content_plot(model_name, True)
         logging.info('All models studied with features set ' + suffix)

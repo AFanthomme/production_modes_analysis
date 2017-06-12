@@ -34,6 +34,7 @@ def calculate_metrics(model_name):
     bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
     bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
+    bkg_repartition *= 0.5 * cst.luminosity  # No train/test split 
     specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
     acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
     np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
@@ -58,7 +59,7 @@ def make_pretty_table(model_name):
     bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
     bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates.dst').astype(int)
-    bkg_weights_ref *= cst.cross_sections['ZZTo4l'] * 0.5 / cst.event_numbers['ZZTo4l']
+    bkg_weights_ref *= 0.5 # Here there was no train/test split 
     nb_categories = len(cst.event_categories)
     nb_processes = nb_categories + 1   # Consider all background at once
 
@@ -81,12 +82,12 @@ def make_pretty_table(model_name):
         
         contents_table *= cst.luminosity
 
-        contents_table = np.around(contents_table, 3)
+        contents_table = np.around(contents_table, 5)
         row_labels = [cat + '_tagged' for cat in cst.event_categories]
         col_labels = cst.event_categories + ['ZZ4l']
         dataframe = pd.DataFrame(contents_table, index=row_labels, columns=col_labels)
         pretty_table = dataframe.to_latex()
-        print(pretty_table)
+        #print(pretty_table)
         with open('saves/tables_latex/' + model_name + fs_label, 'w') as f:
             f.write(pretty_table)
 
