@@ -48,7 +48,7 @@ if __name__ == "__main__":
                 logging.info('Generating predictions for ' + model_name + suffix)
                 ctg.generate_predictions(model_name)
             try:
-                raise IOError
+                #raise IOError
                 open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
             except IOError:
                 logging.info('Generating metrics for ' + model_name + suffix)
@@ -56,3 +56,4 @@ if __name__ == "__main__":
             evl.make_pretty_table(model_name)
             evl.content_plot(model_name, True)
         logging.info('All models studied with features set ' + suffix)
+    #roc.roc_curve()
