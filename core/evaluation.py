@@ -7,7 +7,6 @@ import core.trainer as ctg
 import core.constants as cst
 import cPickle as pickle
 import pandas as pd
-from core.constants import features_names_xgdb
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]

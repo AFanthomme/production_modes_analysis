@@ -11,7 +11,6 @@ import logging
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 
-
 def custom_roc():
     extension = '_nomass'
     available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if

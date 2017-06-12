@@ -84,14 +84,7 @@ def post_selection_processing(data_set, features_tuple):
 
     return data_set, final_states, mask
 
-def get_background_files(modes=(0, 1, 2)):
-    '''
-    Pre-processes the background files. 
-    For now, only one background, this needs to be modified a bit to add another one.
-    :param modes: 
-    :return: 
-    '''
-    plop=0
+def get_background_files(modes=(0, 1, 2), m_range=('118', '130')):
     for features_mode in modes:
         directory, suffix = cst.dir_suff_dict[features_mode]
         to_retrieve, to_compute, to_remove = features_specs[features_mode]
@@ -100,9 +93,9 @@ def get_background_files(modes=(0, 1, 2)):
             tree = rfile.Get('ZZTree/candTree')
 
             data_set = tree2array(tree, branches=to_retrieve, selection=
-                        'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
+                        'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1])
             weights = tree2array(tree, branches='overallEventWeight', selection=
-                        'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
+                        'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1])
 
             data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
@@ -132,7 +125,7 @@ def identify_final_state(Z1_flavarr, Z2_flavarr):
     return tmp
 
 
-def read_root_files(modes):
+def read_root_files(modes, m_range=('118', '130')):
     '''
     Reads the root files for all production modes defined in constants, and outputs a first set of files 
     that still need to be merged, scaled, etc...
@@ -155,9 +148,9 @@ def read_root_files(modes):
 
             if prod_mode not in ['WminusH', 'WplusH', 'ZH']:
                 data_set = tree2array(tree, branches=to_retrieve, selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1])
                 weights = tree2array(tree, branches='overallEventWeight', selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130')
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1])
 
                 data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
@@ -187,9 +180,9 @@ def read_root_files(modes):
 
                 for decay in decay_criteria.keys():
                     data_set = tree2array(tree, branches=to_retrieve, selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1] + decay_criteria[decay])
                     weights = tree2array(tree, branches='overallEventWeight', selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1] + decay_criteria[decay])
 
                     data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
 
@@ -216,9 +209,9 @@ def read_root_files(modes):
 
                 for decay in decay_criteria.keys():
                     data_set = tree2array(tree, branches=to_retrieve, selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1] + decay_criteria[decay])
                     weights = tree2array(tree, branches='overallEventWeight', selection=
-                            'ZZsel > 90 && 118 < ZZMass && ZZMass < 130' + decay_criteria[decay])
+                            'ZZsel > 90 && ' + m_range[0] + '< ZZMass && ZZMass < ' + m_range[1] + decay_criteria[decay])
 
                     data_set, final_states, mask = post_selection_processing(data_set, features_specs[features_mode])
                     if features_mode == 0:

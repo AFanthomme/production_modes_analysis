@@ -87,12 +87,15 @@ xgb_base = XGBClassifier(
      colsample_bytree=0.8,
      objective= 'multi:softmax',
      num_class=7,
-     n_jobs=8,
+     n_jobs=12,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
-models_dict = {}
+models_dict = {'xgbslow_200': (xgb_base, [2., 1., 1., 1., 1., 1., 1.]),
+               'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
+               'xgbslow_900': (xgb_base, [9., 1., 1., 1., 1., 1., 1.]),
+               }
 
 
 def add_xgdb():
@@ -114,5 +117,5 @@ def add_stumps():
             (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
              [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
-add_xgdb()
+#add_xgdb()
 #add_stumps()

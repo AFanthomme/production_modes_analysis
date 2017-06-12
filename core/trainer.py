@@ -8,6 +8,7 @@ from copy import deepcopy as copy
 import xgboost as xgb
 import pandas as pd
 
+train, test, predictors, target, bkg, current_feature_set, train_label, test_label = tuple([None for _ in range(8)])
 
 def prepare_xgdb():
     global train, test, predictors, target, bkg, current_feature_set, train_label, test_label
@@ -51,12 +52,6 @@ def model_training(model_name):
         pickle.dump(analyser, f)
 
 def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
-    try:
-        current_feature_set
-    except NameError:
-        global current_feature_set
-        current_feature_set = -1
-
     if cst.features_set_selector != current_feature_set:
         logging.info('Reloading datasets with new feature set')
         prepare_xgdb()
