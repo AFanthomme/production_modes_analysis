@@ -13,8 +13,6 @@ from root_numpy import tree2array
 import numpy as np
 import numpy.lib.recfunctions as rcf
 from sklearn import preprocessing as pr
-# from core.constants import base_features, production_modes, event_numbers, cross_sections, \
-#     event_categories, likelihood_names, dir_suff_dict, backgrounds
 from core.misc import frozen
 import core.constants as cst
 
@@ -360,7 +358,7 @@ def clean_intermediate_files(modes=(0, 1, 2)):
                 os.remove(directory + file_name)
 
 
-def full_process(modes=tuple(range(2)), m_range=['118', '130']):
+def full_process(modes=tuple(range(2)), m_range=('118', '130')):
     logging.info('Reading root files')
     read_root_files(modes, m_range)
     logging.info('Merging vector modes')

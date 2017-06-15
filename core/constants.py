@@ -4,25 +4,17 @@ Define all constants needed for what we want to do, and the sklearn models to us
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-#from core.custom_classifiers import SelfThresholdingAdaClassifier
 import numpy as np
-import pickle
-import datetime
 import warnings
 global_verbosity = 0
 ignore_warnings = True
-import xgboost as xgb
 import os
 from xgboost.sklearn import XGBClassifier
-from sklearn.model_selection import GridSearchCV
+
 os.environ['PATH'] = os.environ['PATH'] + ';C:\\Program Files\\mingw-w64\\x86_64-5.3.0-posix-seh-rt_v4-rev0\\mingw64\\bin'
 
-# Select one of the already defined modes. The selector is evaluated whenever it is needed, so that this value
-# can easily be overriden from main.py
-# To add new sets of features (either from file or calculated), add the corresponding file and suffix here then
-# modify preprocessing.py
-features_set_selector = 1
 
+features_set_selector = 1
 
 if not os.path.isdir('saves/classifiers'):
     os.makedirs('saves/classifiers')
@@ -92,7 +84,7 @@ xgb_base = XGBClassifier(
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
-models_dict = {'xgbslow_170': (xgb_base, [1.7., 1., 1., 1., 1., 1., 1.]),
+models_dict = {'xgbslow_170': (xgb_base, [1.7, 1., 1., 1., 1., 1., 1.]),
                'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
                }
 
@@ -104,17 +96,5 @@ def add_xgdb():
     for purity_param in np.arange(100, 300, step=10):
         models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-    
-def add_stumps():
-    for n_est in [500, 1000]:
-        for purity_param in np.arange(100, 1000, step=50):
-            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
-             [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-        for purity_param in np.arange(100, 300, step=10):
-            models_dict['adaboost_stumps_' + str(n_est) + '_' + str(purity_param) + '_' + 'custom'] = \
-            (AdaBoostClassifier(decision_stump, n_estimators=n_est, learning_rate=0.3),
-             [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 
 #add_xgdb()
-#add_stumps()
