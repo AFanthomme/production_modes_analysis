@@ -6,14 +6,12 @@ import core.evaluation as evl
 import core.preprocessing as pr
 import core.roc_curve as roc
 
-
 logging.basicConfig(filename='logs', format='%(levelname)s %(asctime)s %(message)s', level=logging.INFO,
                     datefmt='%H:%M:%S')
 logging.info('Logger initialized from main script')
 
 if cst.ignore_warnings:
     warnings.filterwarnings('ignore')
-
 
 if __name__ == "__main__":
     #pr.get_background_files((0, 1))
@@ -24,7 +22,7 @@ if __name__ == "__main__":
         open('saves/common_nomass/full_test_set.dst')
     except IOError:
         logging.info('Preprocessing datasets (might take some time)')
-        pr.full_process((0, 1,), m_range=('105', '140'))
+        pr.full_process((0, 1,), m_range=cst.mass_range)
 
     for plop in [1]:
         cst.features_set_selector = plop
@@ -54,6 +52,6 @@ if __name__ == "__main__":
                 logging.info('Generating metrics for ' + model_name + suffix)
                 evl.calculate_metrics(model_name)
             evl.make_pretty_table(model_name)
-            evl.content_plot(model_name, True)
+            # evl.content_plot(model_name, True)
         logging.info('All models studied with features set ' + suffix)
     #roc.roc_curve()

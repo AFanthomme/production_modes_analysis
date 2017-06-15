@@ -28,7 +28,6 @@ if not os.path.isdir('saves/metrics'):
 if not os.path.isdir('saves/predictions'):
     os.makedirs('saves/predictions')
 
-
 if ignore_warnings:
     warnings.filterwarnings('ignore')
 
@@ -37,14 +36,16 @@ dir_suff_dict = [('saves/common_full/', '_full'), ('saves/common_nomass/', '_nom
                 ]
 
 production_modes = ['ggH', 'VBFH', 'WminusH', 'WplusH', 'ZH', 'ttH', 'bbH']
+
 event_categories = ['ggH', 'VBFH', 'VH_hadr', 'VH_lept','ZH_met', 'ttH', 'bbH']
 
+luminosity = 2 * 35.9   # factor 2 because only half of the initial data set used for evaluation
 
-# These are the physical constants
-luminosity = 2 * 35.9   # (fb-1), factor 2 because only half of the initial data set used for evaluation
+mass_range = ('105', '140')
 cross_sections = {'ggH': 13.41, 'VBFH': 1.044, 'WminusH': 0.147, 'WplusH': 0.232, 'ZH': 0.668, 'ttH': 0.393,
                   'VH': 0.232, 'VH_lept': 0.232, 'VH_hadr': 0.232, 'bbH': 0.1347, 'ZH_met': 0.668,
                   'ZZTo4l': 1256.0}
+
 event_numbers = {'ZH': 376657.21875, 'WplusH': 252870.65625, 'WminusH': 168069.609375, 'ttH': 327699.28125,
                  'ggH': 999738.125, 'VBFH': 1885726.125, 'VH': 252870.65625, 'VH_lept': 252870.65625,
                  'VH_hadr': 252870.65625, 'bbH':327699.28125, 'ZH_met': 376657.21875, 'ZZTo4l': 6670241.5}
@@ -68,7 +69,6 @@ likelihood_names = ['p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'p_JQCD_SIG_ghg2_1_J
 
 backgrounds = ['ZZTo4l']
 
-
 xgb_base = XGBClassifier(
      learning_rate =0.04,
      n_estimators=1000,
@@ -90,10 +90,7 @@ models_dict = {'xgbslow_170': (xgb_base, [1.7, 1., 1., 1., 1., 1., 1.]),
 
 
 def add_xgdb():
-#    for purity_param in np.arange(100, 1000, step=50):
-#        models_dict['xgbslow' + '_' + str(purity_param)] = \
-#            (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-    for purity_param in np.arange(100, 300, step=10):
+    for purity_param in np.arange(100, 500, step=10):
         models_dict['xgbslow' + '_' + str(purity_param)] = \
             (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
 

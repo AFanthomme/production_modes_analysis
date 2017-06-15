@@ -20,6 +20,9 @@ def custom_roc():
     p.ylabel('Acceptance')
     p.title('Specifity vs Acceptance in the VBF category' + '\n')
 
+
+    # These are PAS numbers using the 118-130 GeV, if we use the wider range the specificity should drop seriously.
+    # Especially, if the models were trained on wider range, comparison unfair to them.
     acceptance = 0.47
     specificity = 0.37
     p.scatter(specificity, acceptance, marker='*', c='g', s=10**2, label='Legacy Mor17 2j only')
@@ -53,6 +56,9 @@ def check_weight_influence():
     p.ylabel('Acceptance')
     p.title('Specifity vs Acceptance in VBF category with featureset ' + extension + '\n')
 
+
+    # These are PAS numbers using the 118-130 GeV, if we use the wider range the specificity should drop seriously.
+    # Especially, if the models were trained on wider range, comparison unfair to them.
     acceptance = 0.47
     specificity = 0.37
     p.scatter(specificity, acceptance, marker='*', c='g', s=10**2, label='Legacy Mor17 2j only')
@@ -70,28 +76,3 @@ def check_weight_influence():
     p.legend(loc=1)
     p.savefig('saves/figs/weight_influence')
     p.show()
-
-
-
-def find_best_model():
-    models = np.array(['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if
-                        full_name.split('_')[-1] == 'acceptance.txt'])
-
-    for cat in range(1, 2):
-        # Could be improved to allow for exploration of other regions
-        acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[cat] for name in models])
-        specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[cat] for name in models])
-
-        mask = specificities > 0.47    # consider only models at least as pure as Legacy in VBF
-        models = models[mask]
-        acceptances = acceptances[mask]
-        specificities = specificities[mask]
-
-        max_acceptance = np.max(acceptances)
-        mask_2 = acceptances > 0.97 * max_acceptance
-        models = models[mask_2]
-
-    for model in models :
-        content_plot('_'.join(model.split('_')[:-1]), save=True)
-
-

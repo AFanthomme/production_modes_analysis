@@ -154,41 +154,6 @@ def content_plot(model_name, save=False):
         p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
     p.close(fig2)
 
-def search_discrimination(model_name, mode=1, verbose=cst.global_verbosity):
-    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    suffix += '/'
-    directory = 'saves/' + model_name + suffix
-    if not os.path.isfile(directory + 'predictions.prd'):
-        if verbose:
-            print('Generating predictions')
-        ctg.generate_predictions(model_name)
-
-    test_set = np.loadtxt('saves/common' + suffix + 'full_test_set.dst')
-    true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
-    weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
-
-    predictions = np.loadtxt(directory + 'predictions.txt')
-
-    for idx, true_cat, predicted_cat, rescaled_weight in enumerate(izip(true_categories, predictions, weights)):
-        right_indices = []
-        wrong_indices = []
-        if predicted_cat == mode:
-            if true_cat == mode:
-                right_indices.append(idx)
-            else:
-                wrong_indices.append(idx)
-
-    discriminants_list = []
-    colors = ['g', 'r']
-    labels = ['Correct', 'Incorrect']
-
-    for discriminant in discriminants_list:
-        my_list = [test_set[discriminant][idx_list] for idx_list in [right_indices, wrong_indices]]
-        p.hist(my_list, 50, stacked=True, histtype='bar', color=colors, label=labels)
-        p.title('Distribution of ' + discriminant + ' among events classified as ' + cst.event_categories[mode])
-        p.savefig('saves/hists/' + model_name + '_' + discriminant + '_' + suffix[:-1] + '.png')
-
-
 def feature_importance_plot(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb') as f:
@@ -205,14 +170,3 @@ def feature_importance_plot(model_name):
     ax = feat_imp.plot(kind='bar', title='Features relative importance')
     ax.set_xticklabels(features_names_xgdb[ordering], rotation=30, fontsize=8)
     p.savefig('saves/figs/feature_importance.png')
-
-def print_latex(model_name):
-    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    model_name += suffix
-    suffix += '/'
-
-    table = pd.read_table('saves/metrics/' + model_name + '_contentstable.txt', header=None, names=cst.event_categories,
-                          )
-    table['Inclusive'] = table.sum(axis=1)
-    table.index= cst.event_categories
-    print(table.to_latex())
