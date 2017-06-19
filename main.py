@@ -30,7 +30,7 @@ for plop in [1]:
     for model_name in cst.models_dict.keys():
         logging.info('Studying model ' + model_name + suffix)
         try:
-            raise IOError
+            #raise IOError
             open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
         except IOError:
             logging.info('Training model ' + model_name)
@@ -39,14 +39,14 @@ for plop in [1]:
             elif model_name[0] == 'x':
                 ctg.train_xgcd(model_name)
         try:
-            raise IOError
+            #raise IOError
             open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
             open('saves/predictions/' + model_name + suffix + '_bkg_predictions.prd', 'rb')
         except IOError:
             logging.info('Generating predictions for ' + model_name + suffix)
             ctg.generate_predictions(model_name)
         try:
-            raise IOError
+            #raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
         except IOError:
             logging.info('Generating metrics for ' + model_name + suffix)

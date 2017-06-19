@@ -68,7 +68,7 @@ likelihood_names = ['p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'p_JQCD_SIG_ghg2_1_J
 backgrounds = ['ZZTo4l']
 
 xgb_base = XGBClassifier(
-     learning_rate =0.04,
+     learning_rate =0.3,
      n_estimators=1000,
      max_depth=4,
      min_child_weight=4,
