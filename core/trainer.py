@@ -90,7 +90,6 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
     predictions = np.loadtxt(in_path + '_train_predictions.prd')
     bkg_predictions = np.loadtxt(in_path + '_train_bkg_predictions.prd')
 
-
     for category in [3,]:
         sub_train = train[np.where(predictions == category)]
         sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
@@ -134,22 +133,49 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'wb') as f:
             pickle.dump(alg, f)
 
-def stack_predictors(model_name):
+def factory(i):
+    def f(*args):
+        return i
+    return f
+
+class stacked_model:
+    def __init__(self, base, subs):
+        self.base_classifier = base
+        self.subclassifiers = subs
+
+    def predict(self, events):
+        predictions = self.base_classifier.predict(events)
+
+        for idx, subclassifier in enumerate(self.subclassifiers):
+            subset = events[np.where(int(predictions) == idx)]
+            modify = np.logical_not(subclassifier.predict(subset))
+            predictions[np.where(int(predictions) == idx)[modify]] = 0
+
+        return predictions
+
+
+def make_stacked_predictors(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
 
     with open('saves/classifiers/' + model_name + suffix + '_basecategorizer.pkl', mode='rb') as f:
-        classifier = pickle.load(f)
+        base_classifier = pickle.load(f)
 
-    out_path = 'saves/predictions/' + model_name + suffix
-    results = classifier.predict(test)
-    probas = classifier.predict_proba(test)
-    bkg_results = classifier.predict(bkg)
+    subclassifiers = [factory(cat) for cat in range(len(cst.event_categories))]
+
+    for category in [3,]:
+        with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'rb') as f:
+            alg = pickle.load(f)
+        subclassifiers[category] = alg
+
+    stacked = stacked_model(base_classifier, subclassifiers)
+    with open('saves/classifiers/' + model_name + suffix + '_stackedcategorizer.pkl', mode='wb') as f:
+        pickle.dump(f, stacked)
+
+    out_path = 'saves/predictions/' + model_name + suffix + '_stacked_'
+    results = stacked.predict(test)
+    bkg_results = stacked.predict(bkg)
     np.savetxt(out_path + '_predictions.prd', results)
-    np.savetxt(out_path + '_probas.prb', probas)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
 
-    results = classifier.predict(train)
-    bkg_results = classifier.predict(bkg_train)
-    np.savetxt(out_path + '_train_predictions.prd', results)
-    np.savetxt(out_path + '_train_bkg_predictions.prd', bkg_results)
+
 
