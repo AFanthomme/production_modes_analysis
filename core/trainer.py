@@ -58,13 +58,53 @@ def generate_predictions(model_name):
     with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', mode='rb') as f:
         classifier = pickle.load(f)
 
+    out_path = 'saves/predictions/' + model_name + suffix
     results = classifier.predict(test)
     probas = classifier.predict_proba(test)
     bkg_results = classifier.predict(bkg)
-
-    out_path = 'saves/predictions/' + model_name + suffix
     np.savetxt(out_path + '_predictions.prd', results)
     np.savetxt(out_path + '_probas.prb', probas)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
 
+    results = classifier.predict(train)
+    probas = classifier.predict_proba(train)
+    bkg_results = classifier.predict(bkg)
+    np.savetxt(out_path + '_predictions.prd', results)
+    np.savetxt(out_path + '_probas.prb', probas)
+    np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
+
+
+
+
+
+def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
+    directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
+
+    if cst.features_set_selector != current_feature_set:
+        logging.info('Reloading datasets with new feature set')
+        prepare_xgdb()
+        logging.info('	New dataset loaded')
+
+    in_path = 'saves/predictions/' + model_name + suffix
+    predictions = np.loadtxt(in_path + '_predictions.prd')
+    bkg_predictions = np.loadtxt(in_path + '_bkg_predictions.prd')
+
+    for category in [3,]:
+        sub_train = test[np.where(predictions == category)]
+
+    alg_temp, class_weights_temp = cst.models_dict[model_name]
+    alg = copy(alg_temp)
+    class_weights = copy(class_weights_temp)
+    directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    xgb_param = alg.get_xgb_params()
+    weights = np.array([class_weights[int(cat)] for cat in train_label])
+    xgtrain = xgb.DMatrix(train[predictors].values, label=train[target].values, weight=weights)
+    cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
+                      stratified=True, metrics='merror', early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
+    alg.set_params(n_estimators=cvresult.shape[0])
+    logging.info('Number of boosting rounds optimized')
+    alg.fit(train[predictors], train[target], eval_metric='merror', sample_weight=weights)
+    logging.info('Model fit')
+    with open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'wb') as f:
+        pickle.dump(alg, f)
 
