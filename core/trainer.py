@@ -8,8 +8,8 @@ import xgboost as xgb
 import pandas as pd
 from xgboost.sklearn import XGBClassifier
 
-train, test, predictors, target, bkg, current_feature_set, bkg_train, bkg_test, train_label, test_label = \
-    tuple([None for _ in range(10)])
+train, test, predictors, target, current_feature_set, bkg_train, bkg_test, train_label, test_label = \
+    tuple([None for _ in range(9)])
 
 def prepare_xgdb():
     global train, test, predictors, target, bkg_train, bkg_test, current_feature_set, train_label, test_label
@@ -124,10 +124,11 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
 
         xgtrain = xgb.DMatrix(sub_train[predictors].values, label=sub_train[target].values, weight=sub_wgt)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
-                          stratified=True, metrics='merror', early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
+                          stratified=True, metrics='error@' + str(threshold),
+                          early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
         alg.set_params(n_estimators=cvresult.shape[0])
         logging.info('Number of boosting rounds optimized')
-        alg.fit(train[predictors], train[target], eval_metric='merror', sample_weight=sub_wgt)
+        alg.fit(train[predictors], train[target], eval_metric='error@' + str(threshold), sample_weight=sub_wgt)
         logging.info('Model fit')
 
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'wb') as f:
@@ -168,12 +169,12 @@ def make_stacked_predictors(model_name):
         subclassifiers[category] = alg
 
     stacked = stacked_model(base_classifier, subclassifiers)
-    with open('saves/classifiers/' + model_name + suffix + '_stackedcategorizer.pkl', mode='wb') as f:
+    with open('saves/classifiers/' + model_name + suffix + '_stacked_categorizer.pkl', mode='wb') as f:
         pickle.dump(f, stacked)
 
     out_path = 'saves/predictions/' + model_name + suffix + '_stacked_'
     results = stacked.predict(test)
-    bkg_results = stacked.predict(bkg)
+    bkg_results = stacked.predict(bkg_test)
     np.savetxt(out_path + '_predictions.prd', results)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
 

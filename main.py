@@ -38,8 +38,10 @@ for plop in [1]:
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
                 #ctg.train_xgcd(model_name)
+                logging.info('Training second layer for ' + model_name + suffix)
                 ctg.train_second_layer(model_name)
-                ctg.make_stacked_predictors(model_name
+                logging.info('Stacking layers for ' + model_name + suffix)
+                ctg.make_stacked_predictors(model_name)
         try:
             #raise IOError
             open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')

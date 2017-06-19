@@ -35,7 +35,7 @@ def calculate_metrics(model_name):
     bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
     bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
-    bkg_repartition *= 0.5 * cst.luminosity  # No train/test split 
+    bkg_repartition *= cst.luminosity
     specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
     acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
     np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
