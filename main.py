@@ -37,7 +37,7 @@ for plop in [1]:
             if model_name[0] == 'a':
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
-                #ctg.train_xgcd(model_name)
+                ctg.train_xgcd(model_name)
                 logging.info('Training second layer for ' + model_name + suffix)
                 ctg.train_second_layer(model_name)
                 logging.info('Stacking layers for ' + model_name + suffix)
