@@ -1,8 +1,15 @@
 # Stage m2 : higgs events production modes classification
 
 
+
 #### Using Monte-Carlo simulated data, train Machine Learning classifiers to reconstruct the production modes of Higgs bosons decaying in the Golden Channel. The performance of the models can be evaluated either directly from their category content plot, or from our custom  "Specificity vs Acceptance" curves (in this implementation, only the metrics on VBF category are considered).
 
+
+The program uses both ROOT, rootpy and root_numpy, all these should be installed on your system in order to generate the datasets.
+We also left the program in a state where it trains our best candidate, the xgboosted trees. Therefore, one should install XGBOOst following the instructions from http://xgboost.readthedocs.io/en/latest/build.html 
+
+
+## Details:
 
 Most of the program's behavior is controlled from three files: 
 
