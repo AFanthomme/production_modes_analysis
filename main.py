@@ -30,14 +30,16 @@ for plop in [1]:
     for model_name in cst.models_dict.keys():
         logging.info('Studying model ' + model_name + suffix)
         try:
-            #raise IOError
+            raise IOError
             open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
         except IOError:
             logging.info('Training model ' + model_name)
             if model_name[0] == 'a':
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
-                ctg.train_xgcd(model_name)
+                #ctg.train_xgcd(model_name)
+                ctg.train_second_layer(model_name)
+                ctg.make_stacked_predictors(model_name
         try:
             #raise IOError
             open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
