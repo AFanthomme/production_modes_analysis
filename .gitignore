@@ -13,4 +13,5 @@ saves_narrow/common*
 saves_narrow/metrics
 saves_narrow/legacy
 !/main.py
+*.pyc
 

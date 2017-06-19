@@ -20,8 +20,7 @@ import core.constants as cst
 # Common part of the path to retrieve the root files
 base_path = '/data_CMS/cms/ochando/CJLSTReducedTree/170222/'
 
-# Dictionary of calculated quantities names, function and name of the functions arguments (must be event features)
-# TODO : add a protection to avoid possible changes in the ordering (since dictionary...)
+# Dictionary of calculated quantities names, function and name of the functions arguments (must be features of the tree)
 r.gROOT.LoadMacro("libs/cConstants_no_ext.cc")
 r.gROOT.LoadMacro("libs/Discriminants_no_ext.cc")
 calculated_features = \
@@ -44,12 +43,12 @@ def remove_fields(labeled_arr, *fields_to_remove):
     return labeled_arr[[name for name in labeled_arr.dtype.names if name not in fields_to_remove]]
 
 def post_selection_processing(data_set, features_tuple):
-    '''
+    """
     Adds calculated features and removes unwanted ones
     :param data_set: numpy structured array
     :param features_tuple: a tuple of labels lists (to retrieve, to compute, to remove)
     :return: The dataset with the new calculated fields and without the removed ones.
-    '''
+    """
     nb_events = np.ma.size(data_set, 0)
     mask = np.ones(nb_events).astype(bool)
     dont_care, to_compute, to_remove = features_tuple
@@ -127,8 +126,8 @@ def read_root_files(modes, m_range=('118', '130')):
     '''
     Reads the root files for all production modes defined in constants, and outputs a first set of files 
     that still need to be merged, scaled, etc...
-    :param modes: the features modes to be used (usually 0, 1, ...)
-    :return: 
+    :param modes: the features modes to be used (list of integers, should always start by 0 the _full features set)
+    :param modes: the mass range in which events should be considered.
     '''
     for features_mode in modes:
         directory, suffix = cst.dir_suff_dict[features_mode]

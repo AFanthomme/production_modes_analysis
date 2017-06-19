@@ -1,8 +1,6 @@
 """
 Define all constants needed for what we want to do, and the sklearn models to use
 """
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
 import warnings
@@ -11,8 +9,8 @@ ignore_warnings = True
 import os
 from xgboost.sklearn import XGBClassifier
 
+# Apparently this is necessary to use xgboost, probably only on windows but put it here nevertheless
 os.environ['PATH'] = os.environ['PATH'] + ';C:\\Program Files\\mingw-w64\\x86_64-5.3.0-posix-seh-rt_v4-rev0\\mingw64\\bin'
-
 
 features_set_selector = 1
 
@@ -77,7 +75,7 @@ xgb_base = XGBClassifier(
      gamma=0,
      subsample=0.8,
      colsample_bytree=0.8,
-     objective= 'multi:softmax',
+     objective='multi:softmax',
      num_class=7,
      n_jobs=16,
      )

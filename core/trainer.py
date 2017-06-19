@@ -35,7 +35,9 @@ def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
         prepare_xgdb()
         logging.info('	New dataset loaded')
 
-    alg, class_weights = cst.models_dict[model_name]
+    alg_temp, class_weights_temp = cst.models_dict[model_name]
+    alg = copy(alg_temp)
+    class_weights = copy(class_weights_temp)
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
     xgb_param = alg.get_xgb_params()
     weights = np.array([class_weights[int(cat)] for cat in train_label])

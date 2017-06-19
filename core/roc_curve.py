@@ -1,17 +1,14 @@
 import numpy as np
-from sklearn.tree import DecisionTreeClassifier
 import matplotlib.cm as cm
 import matplotlib.pyplot as p
-from core.evaluation import content_plot
 import os
 
-decision_stump = DecisionTreeClassifier(max_depth=1)
+
 
 def custom_roc():
     extension = '_nomass'
     available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if
                         full_name.split('_')[-1] == 'acceptance.txt']
-    stumps_dict = [name for name in available_models if '_'.join(name.split('_')[0:2]) == 'adaboost_stumps']
 
     p.figure()
     p.xlim(0., 1.)
