@@ -7,6 +7,7 @@ import core.trainer as ctg
 import core.constants as cst
 import cPickle as pickle
 import pandas as pd
+import matplotlib.cm as cm
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -170,3 +171,58 @@ def feature_importance_plot(model_name):
     ax = feat_imp.plot(kind='bar', title='Features relative importance')
     ax.set_xticklabels(features_names_xgdb[ordering], rotation=30, fontsize=8)
     p.savefig('saves/figs/feature_importance.png')
+
+
+def custom_roc():
+    available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if
+                        full_name.split('_')[-1] == 'acceptance.txt']
+
+    p.figure()
+    p.xlim(0., 1.)
+    p.ylim(0., 1.)
+    p.xlabel('Specificity')
+    p.ylabel('Acceptance')
+    p.title('Specifity vs Acceptance in the VBF category' + '\n')
+
+    # These are PAS numbers using the 118-130 GeV, if we use the wider range the specificity should drop seriously.
+    # Especially, if the models were trained on wider range, comparison unfair to them.
+    acceptance = 0.47
+    specificity = 0.37
+    p.scatter(specificity, acceptance, marker='*', c='g', s=10 ** 2, label='Legacy Mor17 2j only')
+    acceptance = 0.73
+    specificity = 0.15
+    p.scatter(specificity, acceptance, marker='o', c='gr', s=10 ** 2, label='Legacy Mor17 1j and 2j')
+
+    plop = [model for model in available_models if (model.split('_')[0] == 'xgbslow')]
+    plop.sort()
+    acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
+    specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
+    coefs = np.polyfit(specificities, acceptances, 3)
+    pol = np.poly1d(coefs)
+    fit_range = np.linspace(np.min(specificities), np.max(specificities), 1024)
+    p.scatter(specificities, acceptances, marker='o', c='r', label='xGDB trees')
+    p.plot(fit_range, pol(fit_range), c='r')
+    p.legend(loc=1)
+    p.savefig('saves/figs/full_roc')
+    p.show()
+
+
+def check_weight_influence():
+    available_models = ['_'.join(full_name.split('_')[:-1]) for full_name in os.listdir('saves/metrics/') if
+                        full_name.split('_')[-1] == 'acceptance.txt']
+
+    p.figure()
+    p.xlim(0., 1.)
+    p.ylim(0., 1.)
+    p.xlabel('Specificity')
+    p.ylabel('Acceptance')
+    p.title('Evolution of the Specifity vs Acceptance in VBF categoryas a function of the rejection parameter \n')
+
+    plop = [model for model in available_models if (model.split('_')[0] == 'xgbslow')]
+    plop.sort()
+    acceptances = np.array([np.loadtxt('saves/metrics/' + name + '_acceptance.txt')[1] for name in plop])
+    specificities = np.array([np.loadtxt('saves/metrics/' + name + '_specificity.txt')[1] for name in plop])
+    p.scatter(specificities, acceptances, marker='o', c=range(len(acceptances)), cmap=cm.autumn, label='xGDB trees')
+    p.legend(loc=1)
+    p.savefig('saves/figs/weight_influence')
+    p.show()
