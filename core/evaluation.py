@@ -11,7 +11,7 @@ import matplotlib.cm as cm
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    model_name += suffix
+    model_name += suffix + '_stacked'
     suffix += '/'
 
     if not os.path.isfile('saves/predictions/' + model_name + '_predictions.prd'):

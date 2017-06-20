@@ -77,13 +77,13 @@ xgb_base = XGBClassifier(
      colsample_bytree=0.8,
      objective='multi:softmax',
      num_class=7,
-     n_jobs=16,
+     n_jobs=6,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 models_dict = {'xgbslow_170': (xgb_base, [1.7, 1., 1., 1., 1., 1., 1.]),
-               'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
+      #         'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
                }
 
 
