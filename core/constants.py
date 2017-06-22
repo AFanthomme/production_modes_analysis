@@ -68,7 +68,7 @@ likelihood_names = ['p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'p_JQCD_SIG_ghg2_1_J
 backgrounds = ['ZZTo4l']
 
 xgb_base = XGBClassifier(
-     learning_rate =0.3,
+     learning_rate =0.03,
      n_estimators=1000,
      max_depth=4,
      min_child_weight=4,
@@ -77,13 +77,16 @@ xgb_base = XGBClassifier(
      colsample_bytree=0.8,
      objective='multi:softmax',
      num_class=7,
-     n_jobs=6,
+     n_jobs=24,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
-models_dict = {'xgbslow_170': (xgb_base, [1.7, 1., 1., 1., 1., 1., 1.]),
-      #         'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
+models_dict = {
+               'xgb___ref': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
+            #   'xgb__2': (xgb_base, [0., 6., 2., 1., 1., 1., 1.]),
+            #   'xgb__5': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
+            #   'xgb__6': (xgb_base, [0., 6., 6., 1., 1., 1., 1.]),
                }
 
 

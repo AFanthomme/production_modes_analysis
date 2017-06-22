@@ -31,13 +31,21 @@ for plop in [1]:
         logging.info('Studying model ' + model_name + suffix)
         try:
             #raise IOError
-            open('saves/classifiers/' + model_name + suffix + '_categorizer.pkl', 'rb')
+            open('saves/classifiers/' + model_name + suffix + '_basecategorizer.pkl', 'rb')
         except IOError:
             logging.info('Training model ' + model_name)
             if model_name[0] == 'a':
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
-                #ctg.train_xgcd(model_name)
+                ctg.train_xgcd(model_name)
+        try:
+            #raise IOError
+            open('saves/classifiers/' + model_name + suffix + '_subcategorizer3.pkl', 'rb')
+        except IOError:
+            logging.info('Training model ' + model_name)
+            if model_name[0] == 'a':
+                ctg.model_training(model_name)
+            elif model_name[0] == 'x':
                 logging.info('Training second layer for ' + model_name + suffix)
                 ctg.train_second_layer(model_name)
                 logging.info('Stacking layers for ' + model_name + suffix)
@@ -48,7 +56,7 @@ for plop in [1]:
             open('saves/predictions/' + model_name + suffix + '_bkg_predictions.prd', 'rb')
         except IOError:
             logging.info('Generating predictions for ' + model_name + suffix)
-            ctg.generate_predictions(model_name)
+            #ctg.generate_predictions(model_name)
         try:
             raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')

@@ -11,37 +11,35 @@ import matplotlib.cm as cm
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    model_name += suffix + '_stacked'
-    suffix += '/'
-
-    if not os.path.isfile('saves/predictions/' + model_name + '_predictions.prd'):
-        ctg.generate_predictions(model_name)
-
-    true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
-    weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
-    predictions = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
-
-    nb_categories = len(cst.event_categories)
-    contents_table = np.zeros((nb_categories, nb_categories))
-
-    for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-        contents_table[predicted_tag, true_tag] += rescaled_weight
-
-    contents_table *= cst.luminosity
-    correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]
-    wrong_in_cat = np.sum(np.where(np.logical_not(np.identity(nb_categories, dtype=bool)), contents_table, 0), axis=1)
-    cat_total_content = np.sum(contents_table, axis=0)
-
-    bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-    bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
-    bkg_repartition *= cst.luminosity
-    specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
-    acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
-    np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
-    np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
-    np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
-    np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
+    
+    for model_name in [model_name + suffix + '_stacked', model_name + suffix]:
+        suffix += '/'
+    
+        true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
+        weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
+        predictions = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
+    
+        nb_categories = len(cst.event_categories)
+        contents_table = np.zeros((nb_categories, nb_categories))
+    
+        for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
+            contents_table[predicted_tag, true_tag] += rescaled_weight
+    
+        contents_table *= cst.luminosity
+        correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]
+        wrong_in_cat = np.sum(np.where(np.logical_not(np.identity(nb_categories, dtype=bool)), contents_table, 0), axis=1)
+        cat_total_content = np.sum(contents_table, axis=0)
+    
+        bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
+        bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
+        bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
+        bkg_repartition *= cst.luminosity
+        specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
+        acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
+        np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
+        np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
+        np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
+        np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
 
 def make_pretty_table(model_name):
     fs_labels = ['_4e', '_2e2mu', '_4mu']
@@ -58,8 +56,8 @@ def make_pretty_table(model_name):
     predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
     final_states = np.loadtxt('saves/common' + suffix + 'full_test_finalstates.dst').astype(int)
     bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates.dst').astype(int)
+    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
+    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates_test.dst').astype(int)
     bkg_weights_ref *= 0.5 # Here there was no train/test split 
     nb_categories = len(cst.event_categories)
     nb_processes = nb_categories + 1   # Consider all background at once

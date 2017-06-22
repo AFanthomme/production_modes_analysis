@@ -26,16 +26,9 @@ def prepare_xgdb():
     test = pd.read_table(directory + 'full_test_set.dst',sep=None, names=features_names_xgdb, header=None)
     test_label = np.loadtxt(directory + 'full_test_labels.lbl')
     target = 'prod_mode'
-    with open(directory + 'scaler.pkl', 'rb') as f:
-        scaler = pickle.load(f)
     predictors = [x for x in train.columns if x not in [target]]
-    bkg = pd.DataFrame(scaler.transform(np.loadtxt(directory + 'ZZTo4l.dst')), columns=features_names_xgdb)
-    nb_bkg = bkg.shape[0]
-    print(str(nb_bkg) + ' bkg events')
-    bkg_train = bkg[nb_bkg // 2:]
-    print(str(bkg_train.shape[0]))
-    bkg_test = bkg[:nb_bkg // 2]
-    print(str(bkg_test.shape[0]))
+    bkg_train = pd.DataFrame(np.loadtxt(directory + 'ZZTo4ltraining.dst'), columns=features_names_xgdb)
+    bkg_test = pd.DataFrame(np.loadtxt(directory + 'ZZTo4l_test.dst'), columns=features_names_xgdb)
     current_feature_set = cst.features_set_selector
 
 
@@ -71,7 +64,7 @@ def generate_predictions(model_name):
     out_path = 'saves/predictions/' + model_name + suffix
     results = classifier.predict(test)
     probas = classifier.predict_proba(test)
-    bkg_results = classifier.predict(bkg)
+    bkg_results = classifier.predict(bkg_test)
     np.savetxt(out_path + '_predictions.prd', results)
     np.savetxt(out_path + '_probas.prb', probas)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
@@ -103,12 +96,13 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         assert sub_train.shape[0] == train_label[np.where(predictions == category)].shape[0]
         sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         assert sub_train.shape[0] == sub_label.shape[0]
-        #sub_wgt = np.array([class_weights[int(cat)] for cat in sub_label])
-        sub_wgt = np.array([1 for cat in sub_label])
+        class_weights = [10., 1., 1., 1., 1., 1., 1., 1., 1.]
+        sub_wgt = np.array([class_weights[int(cat)] for cat in sub_label])
+        #sub_wgt = np.array([1 for cat in sub_label])
         
         np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
         np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
-        np.append(sub_wgt, 1. * np.ones(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
+        np.append(sub_wgt, 5. * np.ones(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
         assert sub_train.shape[0] == sub_label.shape[0]
         assert sub_train.shape[0] == sub_wgt.shape[0]
         sub_train['prod_mode'] = sub_label
@@ -116,7 +110,7 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         assert np.ma.size(threshold) == 1
 
         prototype = XGBClassifier(
-            learning_rate=0.3,
+            learning_rate=0.1,
             n_estimators=1000,
             max_depth=4,
             min_child_weight=4,
@@ -188,9 +182,15 @@ def make_stacked_predictors(model_name):
     with open('saves/classifiers/' + model_name + suffix + '_stacked_categorizer.pkl', mode='wb') as f:
         pickle.dump(stacked, f)
 
-    out_path = 'saves/predictions/' + model_name + suffix + '_stacked'
-    results = stacked.predict(test)
+
+    out_path = 'saves/predictions/' + model_name + suffix
     compare = base_classifier.predict(test)
+    bkg_compare = base_classifier.predict(bkg_test)
+    np.savetxt(out_path + '_predictions.prd', compare)
+    np.savetxt(out_path + '_bkg_predictions.prd', bkg_compare)
+    
+    out_path += '_stacked'
+    results = stacked.predict(test)
     bkg_results = stacked.predict(bkg_test)
     np.savetxt(out_path + '_predictions.prd', results)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)

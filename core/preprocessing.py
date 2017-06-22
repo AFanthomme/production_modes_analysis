@@ -279,38 +279,13 @@ def merge_vector_modes(modes=(0, 1)):
     logging.info('Merged data successfully generated')
 
 
-def prepare_scalers(modes=(0, 1)):
-    gen_modes_int = cst.event_categories
-    for mode in modes:
-        directory, no_care = cst.dir_suff_dict[mode]
-        file_list = [directory + mode for mode in gen_modes_int]
-        training_set = np.loadtxt(file_list[0] + '_training.txt')
-        test_set = np.loadtxt(file_list[0] + '_test.txt')
-
-        for idx, filename in enumerate(file_list[1:]):
-            temp_train = np.loadtxt(filename + '_training.txt')
-            temp_test = np.loadtxt(filename + '_test.txt')
-            training_set = np.concatenate((training_set, temp_train), axis=0)
-            test_set = np.concatenate((test_set, temp_test), axis=0)
-
-        scaler = pr.StandardScaler()
-        scaler.fit(training_set)
-        scaler.fit = frozen
-        scaler.fit_transform = frozen
-        scaler.set_params = frozen
-
-        with open(directory + 'scaler.pkl', 'wb') as f:
-            pickle.dump(scaler, f)
-
-
-def make_scaled_datasets(modes=(0, 1, 2)):
+def make_full_datasets(modes=(0, 1, 2)):
     for mode in modes:
         directory, no_care = cst.dir_suff_dict[mode]
 
         file_list = [directory + cat for cat in cst.event_categories]
         training_set = np.loadtxt(file_list[0] + '_training.txt')
         test_set = np.loadtxt(file_list[0] + '_test.txt')
-        np.savetxt(file_list[0] + '_test.txt', test_set)
         training_labels = np.zeros(np.ma.size(training_set, 0))
         test_labels = np.zeros(np.ma.size(test_set, 0))
         training_weights = np.loadtxt(file_list[0] + '_weights_training.txt') * \
@@ -366,7 +341,7 @@ def full_process(modes=tuple(range(2)), m_range=('118', '130')):
     logging.info('Merging vector modes')
     merge_vector_modes(modes)
     logging.info('Merging and scaling datasets')
-    make_scaled_datasets(modes)
+    make_full_datasets(modes)
     logging.info('Getting background files')
     get_background_files(modes, m_range)
     logging.info('Removing all intermediate files')
