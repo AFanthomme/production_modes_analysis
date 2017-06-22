@@ -8,7 +8,6 @@ saves/common*
 saves/metrics
 saves/legacy
 saves_narrow/*
-saves/figs/x*
 !/main.py
 *.pyc
 

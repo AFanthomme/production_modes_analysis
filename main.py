@@ -64,6 +64,6 @@ for plop in [1]:
             logging.info('Generating metrics for ' + model_name + suffix)
             evl.calculate_metrics(model_name)
         evl.make_pretty_table(model_name)
-        # evl.content_plot(model_name, True)
+        evl.content_plot(model_name, True)
     logging.info('All models studied with features set ' + suffix)
 #evl.custom_roc()
