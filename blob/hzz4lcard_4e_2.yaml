@@ -1,0 +1,181 @@
+---
+
+setup: INSERT(common_setup_13TeV.yaml:COMMON_SETUP)
+
+category: hzz_13TeV_4e_VBF2JetTagged
+observation:
+    rate: -1
+    source:
+        path: inputs/data_obs_VBF2JetTaggedMor17_4e.root/data_obs
+        selection: (mass4e>105.0 && mass4e<140.0)
+        observables:
+        #the observables names correspond to branches in tree
+        #and are interpreted with RooWSFactory. This list is first to be defined.
+            - mass4l[INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:mass_range)]
+            - kd[INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:kd_range)]
+
+functions_and_definitions:
+    #level-0 definitions (mu, sigma, width, ...)
+
+systematics:
+    - INSERT(inputs/systematics_expt_13TeV.yaml:*:VBF2jTagged:*:*)
+    - INSERT(inputs/systematics_theory_13TeV.yaml:*:Any:*:*)
+    - INSERT(inputs/systematics_theory_13TeV.yaml:*:VBF2jTagged:*:*)
+    - INSERT(inputs/systematics_13TeV_4e.yaml:*:VBF2jTagged:*:*)
+    - INSERT(inputs/systematics_leptonScaleAndResol_13TeV.yaml:*:VBF2jTagged:*:*)
+
+processes:
+    ggH:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:ggH)
+        functions_and_definitions: &ggH_definitions
+            - expr::mean_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigma_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alpha_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::n_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ggH_VBF2JetTagged.yaml:4e:n2)',MH)
+            - RooDoubleCB::ggH_mass(mass4l, mean_4e_13, sigma_4e_13, alpha_4e_13, n_4e_13, alpha2_4e_13, n2_4e_13)
+        templates : 
+            - ggH_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::ggH_Conv(ggH_mass,ggH_2d|kd)"
+
+    qqH:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:qqH)
+        functions_and_definitions:
+            - expr::meanVBF_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigmaVBF_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alphaVBF_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::nVBF_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2VBF_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2VBF_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_VBFH_VBF2JetTagged.yaml:4e:n2)',MH)
+            - RooDoubleCB::qqH_mass(mass4l, meanVBF_4e_13, sigmaVBF_4e_13, alphaVBF_4e_13, nVBF_4e_13, alpha2VBF_4e_13, n2VBF_4e_13)
+        templates : 
+            - qqH_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::qqH_Conv(qqH_mass,qqH_2d|kd)"
+
+    WH_had:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:WH_had)
+        functions_and_definitions: &WH_had_definitions
+            - expr::mean_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigma_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alpha_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::n_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_had_VBF2JetTagged.yaml:4e:n2)',MH)
+            - RooDoubleCB::WH_had_mass(mass4l, mean_4e_13, sigma_4e_13, alpha_4e_13, n_4e_13, alpha2_4e_13, n2_4e_13)
+        templates : 
+            - WH_had_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::WH_had_Conv(WH_had_mass,WH_had_2d|kd)"
+
+    WH_lep:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:WH_lep)
+        functions_and_definitions : 
+            - expr::meanWH_lep_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigmaWH_lep_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alphaWH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::nWH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2WH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2WH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:n2)',MH)
+            - expr::fracWH_lep('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:frac)',MH)
+            - expr::LWH_lepmass_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:ml)',MH)
+            - expr::LWH_lepsigma_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_WH_lep_VBF2JetTagged.yaml:4e:sl)',MH)
+            - RooLandau::WH_lepLandau(mass4l, LWH_lepmass_4e_13, LWH_lepsigma_4e_13)
+            - RooDoubleCB::WH_lepCB(mass4l, meanWH_lep_4e_13, sigmaWH_lep_4e_13, alphaWH_lep_4e_13, nWH_lep_4e_13, alpha2WH_lep_4e_13, n2WH_lep_4e_13)
+            - SUM::WH_lep_mass(fracWH_lep*WH_lepCB,WH_lepLandau)
+        templates : 
+            - WH_lep_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::WH_lep_Conv(WH_lep_mass,WH_lep_2d|kd)"
+
+    ZH_had:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:ZH_had)
+        functions_and_definitions: &ZH_had_definitions
+            - expr::mean_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigma_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alpha_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::n_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_had_VBF2JetTagged.yaml:4e:n2)',MH)
+            - RooDoubleCB::ZH_had_mass(mass4l, mean_4e_13, sigma_4e_13, alpha_4e_13, n_4e_13, alpha2_4e_13, n2_4e_13)
+        templates : 
+            - ZH_had_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::ZH_had_Conv(ZH_had_mass,ZH_had_2d|kd)"
+
+    ZH_lep:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:ZH_lep)
+        functions_and_definitions : 
+            - expr::meanZH_lep_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigmaZH_lep_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alphaZH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::nZH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2ZH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2ZH_lep_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:n2)',MH)
+            - expr::fracZH_lep('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:frac)',MH)
+            - expr::LZH_lepmass_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:ml)',MH)
+            - expr::LZH_lepsigma_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ZH_lep_VBF2JetTagged.yaml:4e:sl)',MH)
+            - RooLandau::ZH_lepLandau(mass4l, LZH_lepmass_4e_13, LZH_lepsigma_4e_13)
+            - RooDoubleCB::ZH_lepCB(mass4l, meanZH_lep_4e_13, sigmaZH_lep_4e_13, alphaZH_lep_4e_13, nZH_lep_4e_13, alpha2ZH_lep_4e_13, n2ZH_lep_4e_13)
+            - SUM::ZH_lep_mass(fracZH_lep*ZH_lepCB,ZH_lepLandau)
+        templates : 
+            - ZH_lep_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::ZH_lep_Conv(ZH_lep_mass,ZH_lep_2d|kd)"
+
+    ttH:
+        is_signal : 1
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:ttH)
+        functions_and_definitions : 
+            - expr::meanttH_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:mean))*(1+0.001*@1)',MH,CMS_hzz4l_scale_4e)
+            - expr::sigmattH_4e_13('(INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:sigma))*(1+@1)',MH,CMS_hzz4l_res_4e)
+            - expr::alphattH_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:alpha)',MH)
+            - expr::nttH_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:n)',MH)
+            - expr::alpha2ttH_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:alpha2)',MH)
+            - expr::n2ttH_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:n2)',MH)
+            - expr::fracttH('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:frac)',MH)
+            - expr::LttHmass_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:ml)',MH)
+            - expr::LttHsigma_4e_13('INSERT(inputs/signal_shape_parametrization_13TeV_ttH_VBF2JetTagged.yaml:4e:sl)',MH)
+            - RooLandau::ttHLandau(mass4l, LttHmass_4e_13, LttHsigma_4e_13)
+            - RooDoubleCB::ttHCB(mass4l, meanttH_4e_13, sigmattH_4e_13, alphattH_4e_13, nttH_4e_13, alpha2ttH_4e_13, n2ttH_4e_13)
+            - SUM::ttH_mass(fracttH*ttHCB,ttHLandau)
+        templates : 
+            - ttH_2d(mass4l,kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_Sig)
+        shape : "PROD::ttH_Conv(ttH_mass,ttH_2d|kd)"
+
+    qqZZ:
+        is_signal : 0
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:qqZZ)
+        functions_and_definitions : 
+        - expr::CBCqqZZ1_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_qqZZ_VBF2JetTagged.yaml:4e:chebPol1)',MH)
+        - expr::CBCqqZZ2_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_qqZZ_VBF2JetTagged.yaml:4e:chebPol2)',MH)
+        - expr::CBCqqZZ3_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_qqZZ_VBF2JetTagged.yaml:4e:chebPol3)',MH)
+        - RooBernstein::qqZZ_mass(mass4l,{CBCqqZZ1_4e_13,CBCqqZZ2_4e_13,CBCqqZZ3_4e_13})
+        templates : 
+            - qqZZ_2d(mass4l, kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_qqBkg)
+        shape : "PROD::qqZZ_Conv(qqZZ_mass,qqZZ_2d|kd)"
+
+    ggZZ:
+        is_signal : 0
+        rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:ggZZ)
+        functions_and_definitions : 
+        - expr::CBCggZZ1_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_ggZZ_VBF2JetTagged.yaml:4e:chebPol1)',MH)
+        - expr::CBCggZZ2_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_ggZZ_VBF2JetTagged.yaml:4e:chebPol2)',MH)
+        - expr::CBCggZZ3_4e_13('INSERT(inputs/bkg_shape_parametrization_13TeV_ggZZ_VBF2JetTagged.yaml:4e:chebPol3)',MH)
+        - RooBernstein::ggZZ_mass(mass4l,{CBCggZZ1_4e_13,CBCggZZ2_4e_13,CBCggZZ3_4e_13})
+        templates : 
+            - ggZZ_2d(mass4l, kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_ggBkg)
+        shape : "PROD::ggZZ_Conv(ggZZ_mass,ggZZ_2d|kd)"
+
+    # zjets:
+    #     is_signal : 0
+    #     rate : INSERT(inputs/yields_per_tag_category_13TeV_4e.yaml:VBF2jTagged:zjets)
+    #     functions_and_definitions:
+    #         - EXPR::zjets_mass('TMath::Landau(@0,141.9,21.3)',mass4l)
+    #     templates : 
+    #         - zjets_2d(mass4l, kd, inputs/templates2D/HtoZZ4e_ConditionalSmoothMergedTemplatesForCombine_Nominal.root/T_2D_ZX)
+    #     templatesUncertainty : CMS_hzz4l_bkg_kdShape
+    #     shape : "PROD::zjets_Conv(zjets_mass,zjets_2d|kd)"
+
