@@ -83,7 +83,7 @@ xgb_base = XGBClassifier(
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
 models_dict = {
-               'xgb___ref': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
+               'xgb_ref': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
             #   'xgb__2': (xgb_base, [0., 6., 2., 1., 1., 1., 1.]),
             #   'xgb__5': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
             #   'xgb__6': (xgb_base, [0., 6., 6., 1., 1., 1., 1.]),

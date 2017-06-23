@@ -12,7 +12,7 @@ import matplotlib.cm as cm
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     
-    for model_name in [model_name + suffix + '_stacked', model_name + suffix]:
+    for model_name in [model_name + suffix, model_name + '_stacked' + suffix, model_name + '_doublestacked' + suffix]:
         suffix += '/'
     
         true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')

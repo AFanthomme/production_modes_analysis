@@ -14,8 +14,8 @@ if cst.ignore_warnings:
     warnings.filterwarnings('ignore')
 
 #evl.calculate_metrics('xgb___ref_stacked')
-evl.content_plot('xgb___ref_stacked', save=True)
-exit()
+#evl.content_plot('xgb___ref_doublestacked', save=True)
+#exit()
 #evl.make_pretty_table('xgb_200')
 
 try:
@@ -49,8 +49,12 @@ for plop in [1]:
             elif model_name[0] == 'x':
                 logging.info('Training second layer for ' + model_name + suffix)
                 ctg.train_second_layer(model_name)
-                logging.info('Stacking layers for ' + model_name + suffix)
+                logging.info('Stacking second layer for ' + model_name + suffix)
                 ctg.make_stacked_predictors(model_name)
+                logging.info('Training second layer for ' + model_name + suffix)
+                ctg.train_third_layer(model_name)
+                logging.info('Stacking third layer for ' + model_name + suffix)
+                ctg.make_double_stacked_predictors(model_name)
         try:
             #raise IOError
             open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
