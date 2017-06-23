@@ -7,10 +7,10 @@ from copy import deepcopy as copy
 import xgboost as xgb
 import pandas as pd
 from xgboost.sklearn import XGBClassifier
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import ParameterGrid
 from itertools import izip
 
-train, test, predictors, target, current_feature_set, bkg_train, bkg_test, train_label, test_label,
+train, test, predictors, target, current_feature_set, bkg_train, bkg_test, train_label, test_label, \
 test_weights, train_weights, bkg_train_weights = \
     tuple([None for _ in range(12)])
 
@@ -190,7 +190,7 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
     predictions = base.predict(train[predictors])
     bkg_predictions = base.predict(bkg_train[predictors])
 
-    for category in [3,]:
+    for category in [5]:
         sub_train = train.iloc[np.where(predictions == category)]
         sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_wgt = train_weights[np.where(predictions == category)]
@@ -224,12 +224,14 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         xgtrain = xgb.DMatrix(sub_train[predictors].values, label=sub_train[target].values)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
                           stratified=False, metrics='auc',
-                          early_stopping_rounds=early_stopping_rounds, verbose_eval=5)
+                          early_stopping_rounds=early_stopping_rounds, verbose_eval=15)
         alg.set_params(n_estimators=cvresult.shape[0])
         logging.info('Number of boosting rounds optimized')
 
-        scales = np.append(np.linspace(0., 1., 5), np.linspace(3., 7., 3))
-        params_dict = {'scale_pos_weight': scales}
+        #scales = np.append(np.linspace(0., 1., 5), np.linspace(3., 7., 3))
+        center = 0.5
+        scales = np.linspace(center - 0.25, center + 0.25, 5)
+        params_dict = ParameterGrid({'scale_pos_weight': scales})
 
         #plop = GridSearchCV(alg, param_grid=params_dict, scoring=validator_specific_metric, n_jobs=12, cv=)
         plop = gridSearch_basic(params_dict, alg, sub_train[predictors].values, sub_train[target].values,
@@ -238,7 +240,8 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         res = plop.best_params_
         logging.info('\t \tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
 
-        alg = plop.best_estimator_
+        alg.set_params(**plop.best_params_)
+        alg.fit(sub_train[predictors], sub_train[target])
 
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'wb') as f:
             pickle.dump(alg, f)
@@ -262,8 +265,6 @@ class stacked_model(object):
             indices = np.where(predictions.astype(int) == idx)
             subset = events.iloc[indices]
             modify = np.logical_not(subclassifier.predict(subset).astype(bool))
-           # print(subset.shape, modify.shape, len(indices[0]))
-            print(np.sum(modify), indices[0][modify].shape)
             predictions[indices[0][modify]] = 0
 
         return predictions
@@ -277,7 +278,7 @@ def make_stacked_predictors(model_name):
 
     subclassifiers = [dummy_predictor(1) for cat in range(len(cst.event_categories))]
 
-    for category in [3,]:
+    for category in [1, 2, 3, 4, 5, 6]:
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'rb') as f:
             alg = pickle.load(f)
         subclassifiers[category] = alg

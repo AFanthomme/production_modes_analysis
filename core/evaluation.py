@@ -96,11 +96,18 @@ def content_plot(model_name, save=False):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     model_name += suffix
     suffix += '/'
-
-    contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
-    specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
-    acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
-    bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+   
+    try:
+        contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
+        specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
+        acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+    except:
+        model_name = '_'.join((model_name.split('_')[:-2])) + '_nomass_stacked'
+        contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
+        specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
+        acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
 
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
 

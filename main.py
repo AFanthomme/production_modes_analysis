@@ -13,8 +13,9 @@ logging.info('Logger initialized from main script')
 if cst.ignore_warnings:
     warnings.filterwarnings('ignore')
 
-
-#pr.get_background_files((0, 1))
+#evl.calculate_metrics('xgb___ref_stacked')
+evl.content_plot('xgb___ref_stacked', save=True)
+exit()
 #evl.make_pretty_table('xgb_200')
 
 try:
@@ -39,7 +40,7 @@ for plop in [1]:
             elif model_name[0] == 'x':
                 ctg.train_xgcd(model_name)
         try:
-            #raise IOError
+            raise IOError
             open('saves/classifiers/' + model_name + suffix + '_subcategorizer3.pkl', 'rb')
         except IOError:
             logging.info('Training model ' + model_name)
@@ -58,7 +59,7 @@ for plop in [1]:
             logging.info('Generating predictions for ' + model_name + suffix)
             #ctg.generate_predictions(model_name)
         try:
-            raise IOError
+            #raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
         except IOError:
             logging.info('Generating metrics for ' + model_name + suffix)
