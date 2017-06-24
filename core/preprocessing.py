@@ -109,7 +109,7 @@ def get_background_files(modes=(0, 1, 2), m_range=('118', '130')):
 
             nb_events = np.ma.size(data_set, 0)
 
-            np.savetxt(directory + background + 'training.dst', data_set[:nb_events // 2])
+            np.savetxt(directory + background + '_training.dst', data_set[:nb_events // 2])
             np.savetxt(directory + background + '_weights_training.wgt', weights[:nb_events // 2])
             np.savetxt(directory + background + '_finalstates_training.dst', final_states[:nb_events // 2])
             np.savetxt(directory + background + '_test.dst', data_set[nb_events // 2:])

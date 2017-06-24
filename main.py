@@ -47,11 +47,11 @@ for plop in [1]:
             if model_name[0] == 'a':
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
-                logging.info('Training second layer for ' + model_name + suffix)
-                ctg.train_second_layer(model_name)
-                logging.info('Stacking second layer for ' + model_name + suffix)
-                ctg.make_stacked_predictors(model_name)
-                logging.info('Training second layer for ' + model_name + suffix)
+               # logging.info('Training second layer for ' + model_name + suffix)
+               # ctg.train_second_layer(model_name)
+               # logging.info('Stacking second layer for ' + model_name + suffix)
+               # ctg.make_stacked_predictors(model_name)
+                logging.info('Training third layer for ' + model_name + suffix)
                 ctg.train_third_layer(model_name)
                 logging.info('Stacking third layer for ' + model_name + suffix)
                 ctg.make_double_stacked_predictors(model_name)

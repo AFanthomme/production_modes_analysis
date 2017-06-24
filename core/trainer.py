@@ -47,7 +47,7 @@ def prepare_xgdb():
     train_weights = np.loadtxt(directory + 'full_training_weights.wgt')
     target = 'prod_mode'
     predictors = [x for x in train.columns if x not in [target]]
-    bkg_train = pd.DataFrame(np.loadtxt(directory + 'ZZTo4ltraining.dst'), columns=features_names_xgdb)
+    bkg_train = pd.DataFrame(np.loadtxt(directory + 'ZZTo4l_training.dst'), columns=features_names_xgdb)
     bkg_train_weights = np.loadtxt(directory + 'full_training_weights.wgt')
     bkg_test = pd.DataFrame(np.loadtxt(directory + 'ZZTo4l_test.dst'), columns=features_names_xgdb)
     current_feature_set = cst.features_set_selector
@@ -233,7 +233,7 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
                                 scoring=validator_specific_metric)
         plop.fit()
         res = plop.best_params_
-        logging.info('\t \tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
+        logging.info('\tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
 
         alg.set_params(**plop.best_params_)
         alg.fit(sub_train[predictors], sub_train[target])
@@ -256,19 +256,30 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
     predictions = first_stack.predict(train[predictors])
     bkg_predictions = first_stack.predict(bkg_train[predictors])
 
-    for category in range(7):
+    for category in range(0, 4):
         sub_train = train.iloc[np.where(predictions == category)]
         # sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_label = np.ones_like(sub_train)
         sub_wgt = train_weights[np.where(predictions == category)]
 
-        validator_specific_metric = significance_factory(sub_wgt)
+        sub_train_bkg = bkg_train.iloc[np.where(bkg_predictions == category)]
+        sub_train_bkg['prod_mode'] = np.zeros(sub_train_bkg.shape[0])
 
-        np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
-        np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
-
+       # sub_train = pd.concat([sub_train, bkg_train.iloc[np.where(bkg_predictions == category)]])
+       # sub_label = np.append(sub_label, np.zeros(len(np.where(bkg_predictions == category))))
+        sub_wgt = np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
         sub_train['prod_mode'] = sub_label
 
+        validator_specific_metric = significance_factory(sub_wgt)
+        
+        sub_train = pd.concat([sub_train, sub_train_bkg])
+       # logging.info(sub_train['prod_mode'].unique())
+        if len(sub_train['prod_mode'].unique()) == 1:
+            logging.info('validator ' + str(category) + ' is useless')
+            with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
+                pickle.dump(dummy_predictor(1), f)
+            continue
+            
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         alg = copy(lower_layers)
         xgb_param = alg.get_xgb_params()
@@ -279,7 +290,7 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         alg.set_params(n_estimators=cvresult.shape[0])
         logging.info('Number of boosting rounds optimized')
 
-        scales = np.linspace(0.3, 1.3, 11)
+        scales = np.append(np.linspace(0., 0.5, 15), np.linspace(1., 10., 10))
         params_dict = ParameterGrid({'scale_pos_weight': scales})
 
         # Here we do a grid search without cv beacause it's painful to implement with our shady metrics
@@ -287,11 +298,11 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
                                 scoring=validator_specific_metric)
         plop.fit()
         res = plop.best_params_
-        logging.info('\t \tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
+        logging.info('\tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
 
         alg.set_params(**plop.best_params_)
         alg.fit(sub_train[predictors], sub_train[target])
-
+        logging.info(np.bincount(alg.predict(sub_train[predictors]).astype(int)))
         with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
             pickle.dump(alg, f)
         
@@ -324,7 +335,6 @@ class double_stacked_model(object):
         self.base_classifier = base
         self.subclassifiers = subs
         self.rejectors = subsubs
-
 
     def predict(self, events):
         predictions = np.array(self.base_classifier.predict(events))
