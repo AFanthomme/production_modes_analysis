@@ -208,10 +208,8 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_wgt = train_weights[np.where(predictions == category)]
 
-        validator_specific_metric = significance_factory(sub_wgt)
-
-        np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
-        np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
+        # np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
+        # np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
 
         sub_train['prod_mode'] = sub_label
 
@@ -227,6 +225,15 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
 
         scales = np.linspace(0.3, 1.3, 11)
         params_dict = ParameterGrid({'scale_pos_weight': scales})
+
+        sub_train = sub_train[predictors]
+        np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
+        np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
+        np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
+
+        validator_specific_metric = significance_factory(sub_wgt)
+        sub_train['prod_mode'] = sub_label
+
 
         # Here we do a grid search without cv beacause it's painful to implement with our shady metrics
         plop = gridSearch_basic(params_dict, alg, sub_train[predictors].values, sub_train[target].values,
