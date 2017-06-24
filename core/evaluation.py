@@ -23,7 +23,8 @@ def calculate_metrics(model_name):
         contents_table = np.zeros((nb_categories, nb_categories))
     
         for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-            contents_table[predicted_tag, true_tag] += rescaled_weight
+            if predicted_tag:
+                contents_table[predicted_tag, true_tag] += rescaled_weight
     
         contents_table *= cst.luminosity
         correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]

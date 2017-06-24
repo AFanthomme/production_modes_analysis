@@ -280,8 +280,8 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         validator_specific_metric = significance_factory(sub_wgt)
         
         sub_train = pd.concat([sub_train, sub_train_bkg])
-        print(sub_train['prod_mode'].value_counts())
-        print(bkg_train_weights[np.where(bkg_predictions == category)], np.sum(bkg_train_weights))
+        # print(sub_train['prod_mode'].value_counts())
+        # print(bkg_train_weights[np.where(bkg_predictions == category)], np.sum(bkg_train_weights))
         if len(sub_train['prod_mode'].unique()) == 1 or True:
             logging.info('validator ' + str(category) + ' is useless')
             with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
@@ -363,7 +363,7 @@ class double_stacked_model(object):
             indices = np.where(predictions.astype(int) == idx)
             subset = events.iloc[indices]
             modify = np.logical_not(rejector.predict(subset).astype(bool))
-            predictions[indices[0][modify]] = 0  # Maybe set it to a new category for background
+            predictions[indices[0][modify]] = None  # Maybe set it to a new category for background
         return predictions
 
 def make_stacked_predictors(model_name):
