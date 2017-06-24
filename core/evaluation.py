@@ -79,7 +79,7 @@ def make_pretty_table(model_name):
                 contents_table[predicted_tag, true_tag] += rescaled_weight
 
         for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
-            if predicted_tag > 0:
+            if predicted_tag >= 0:
                 contents_table[predicted_tag, -1] += rescaled_weight
         
         contents_table *= cst.luminosity
