@@ -260,10 +260,10 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
     with open('saves/classifiers/' + model_name + suffix + '_stacked_categorizer.pkl', mode='rb') as f:
         first_stack = pickle.load(f)
     
-    predictions = first_stack.predict(train[predictors])
-    bkg_predictions = first_stack.predict(bkg_train[predictors])
+    predictions = first_stack.predict(train[predictors]).astype(int)
+    bkg_predictions = first_stack.predict(bkg_train[predictors]).astype(int)
 
-    for category in range(0, 4):
+    for category in range(4, 5):
         sub_train = train.iloc[np.where(predictions == category)]
         # sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_label = np.ones_like(sub_train)
@@ -280,8 +280,9 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         validator_specific_metric = significance_factory(sub_wgt)
         
         sub_train = pd.concat([sub_train, sub_train_bkg])
-       # logging.info(sub_train['prod_mode'].unique())
-        if len(sub_train['prod_mode'].unique()) == 1:
+        print(sub_train['prod_mode'].value_counts())
+        print(bkg_train_weights[np.where(bkg_predictions == category)], np.sum(bkg_train_weights))
+        if len(sub_train['prod_mode'].unique()) == 1 or True:
             logging.info('validator ' + str(category) + ' is useless')
             with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
                 pickle.dump(dummy_predictor(1), f)
@@ -290,6 +291,12 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         alg = copy(lower_layers)
         xgb_param = alg.get_xgb_params()
+        alg.set_params(scale_pos_weight=0.06)
+        
+        alg.fit(sub_train[predictors], sub_train[target])
+        print('predicted : ', np.unique(alg.predict(sub_train[predictors])))
+   
+
         xgtrain = xgb.DMatrix(sub_train[predictors].values, label=sub_train[target].values)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
                           stratified=False, metrics='auc',
