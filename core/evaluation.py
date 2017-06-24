@@ -23,7 +23,7 @@ def calculate_metrics(model_name):
         contents_table = np.zeros((nb_categories, nb_categories))
     
         for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-            if predicted_tag:
+            if predicted_tag >= 0:
                 contents_table[predicted_tag, true_tag] += rescaled_weight
     
         contents_table *= cst.luminosity
@@ -75,10 +75,12 @@ def make_pretty_table(model_name):
         bkg_predictions = bkg_predictions_ref[bkg_mask_fs]
 
         for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-            contents_table[predicted_tag, true_tag] += rescaled_weight
+            if predicted_tag >= 0:
+                contents_table[predicted_tag, true_tag] += rescaled_weight
 
         for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
-            contents_table[predicted_tag, -1] += rescaled_weight
+            if predicted_tag > 0:
+                contents_table[predicted_tag, -1] += rescaled_weight
         
         contents_table *= cst.luminosity
 

@@ -263,7 +263,7 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
     predictions = first_stack.predict(train[predictors]).astype(int)
     bkg_predictions = first_stack.predict(bkg_train[predictors]).astype(int)
 
-    for category in range(4, 5):
+    for category in range(7):
         sub_train = train.iloc[np.where(predictions == category)]
         # sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_label = np.ones_like(sub_train)
@@ -282,7 +282,7 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         sub_train = pd.concat([sub_train, sub_train_bkg])
         # print(sub_train['prod_mode'].value_counts())
         # print(bkg_train_weights[np.where(bkg_predictions == category)], np.sum(bkg_train_weights))
-        if len(sub_train['prod_mode'].unique()) == 1 or True:
+        if len(sub_train['prod_mode'].unique()) == 1 or category == 4:
             logging.info('validator ' + str(category) + ' is useless')
             with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
                 pickle.dump(dummy_predictor(1), f)
@@ -363,7 +363,7 @@ class double_stacked_model(object):
             indices = np.where(predictions.astype(int) == idx)
             subset = events.iloc[indices]
             modify = np.logical_not(rejector.predict(subset).astype(bool))
-            predictions[indices[0][modify]] = None  # Maybe set it to a new category for background
+            predictions[indices[0][modify]] = -10  # Maybe set it to a new category for background
         return predictions
 
 def make_stacked_predictors(model_name):

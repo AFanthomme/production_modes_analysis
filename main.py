@@ -13,9 +13,9 @@ logging.info('Logger initialized from main script')
 if cst.ignore_warnings:
     warnings.filterwarnings('ignore')
 
-#evl.content_plot('xgb_ref', save=True)
-#evl.content_plot('xgb_ref_stacked', save=True)
-#evl.content_plot('xgb_ref_doublestacked', save=True)
+evl.content_plot('xgb_ref', save=True)
+evl.content_plot('xgb_ref_stacked', save=True)
+evl.content_plot('xgb_ref_doublestacked', save=True)
 evl.make_pretty_table('xgb_ref_doublestacked')
 
 exit()
@@ -50,9 +50,9 @@ for plop in [1]:
                 ctg.model_training(model_name)
             elif model_name[0] == 'x':
                 logging.info('Training second layer for ' + model_name + suffix)
-            #    ctg.train_second_layer(model_name)
+                ctg.train_second_layer(model_name)
                 logging.info('Stacking second layer for ' + model_name + suffix)
-            #    ctg.make_stacked_predictors(model_name)
+                ctg.make_stacked_predictors(model_name)
                 logging.info('Training third layer for ' + model_name + suffix)
                 ctg.train_third_layer(model_name)
                 logging.info('Stacking third layer for ' + model_name + suffix)
@@ -65,7 +65,7 @@ for plop in [1]:
             logging.info('Generating predictions for ' + model_name + suffix)
             #ctg.generate_predictions(model_name)
         try:
-            #raise IOError
+            raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
         except IOError:
             logging.info('Generating metrics for ' + model_name + suffix)
