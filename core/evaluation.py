@@ -37,8 +37,11 @@ def calculate_metrics(model_name):
         bkg_repartition *= cst.luminosity
         specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
         acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
+        significance = [correct_in_cat[cat] / np.sqrt(correct_in_cat[cat] + wrong_in_cat[cat])]
+
         np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
         np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
+        np.savetxt('saves/metrics/' + model_name + '_significance.txt', significance)
         np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
         np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
 
@@ -93,7 +96,7 @@ def make_pretty_table(model_name):
         with open('saves/tables_latex/' + model_name + fs_label, 'w') as f:
             f.write(pretty_table)
 
-def content_plot(model_name, save=False):
+def content_plot(model_name, save=False, layer=0):
     tags_list = copy(cst.event_categories)
     nb_categories = len(cst.event_categories)
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -104,15 +107,20 @@ def content_plot(model_name, save=False):
         contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
         specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
         acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        significance = np.loadtxt('saves/metrics/' + model_name + '_significance.txt')
         bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
     except:
         model_name = '_'.join((model_name.split('_')[:-2])) + '_nomass_stacked'
         contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
         specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
         acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        significance = np.loadtxt('saves/metrics/' + model_name + '_significance.txt')
         bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
 
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
+
+    dummy = ['first', 'second', 'third']
+    model_name = dummy[layer] + ' layer'
 
     fig = p.figure()
     p.title('Content plot for ' + model_name, y=-0.12)
@@ -133,13 +141,19 @@ def content_plot(model_name, save=False):
                            tmp + normalized_content[gen_mode],
                            color=color_array[gen_mode])
             tmp += normalized_content[gen_mode]
-        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{S} = $' +
-                str(np.round(specificity[category], 3)) + r'$; \mathcal{A} =$' + str(np.round(acceptance[category], 3))
-                , fontsize=16, color='w')
+        if layer == 0:
+            ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
+                    str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; \mathcal{A} =$' +
+                    str(np.round(acceptance[category], 3)), fontsize=16, color='w')
+        else:
+            ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
+                    str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; \eta =$' +
+                    str(np.round(significance[category], 3)), fontsize=16, color='w')
+
+
 
     ax.get_yaxis().set_visible(False)
-    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
+    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=7, fontsize=10, mode="expand", borderaxespad=0.)
     if save:
         fig.savefig('saves/figs/' + model_name + '_content_plot.png')
     else:
@@ -147,14 +161,16 @@ def content_plot(model_name, save=False):
     p.close(fig) 
 
     fig2 = p.figure(2)
-    p.title('Per-category fraction of background events for ' + model_name, y=-0.12)
+    p.title('Per-category fraction of background events for ' + model_name +
+            '\n Total of ' + str(np.round(np.sum(bkg_repartition), 2)) + ' background events', y=-0.12)
     ax = fig2.add_subplot(111)
     for category in range(nb_categories):
         position = ordering[category]
-        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category] / np.sum(contents_table[category,:]),
+        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0.,
+                   bkg_repartition[category] / np.sum(contents_table[category,:]),
                   color='0.75', label=cst.event_categories[category])
         ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' + 
-                str(np.round(bkg_repartition[category], 2)) + r' background events'
+                str(np.round(bkg_repartition[category], 2)) + r' bkg events'
                 , fontsize=16, color='b')
 
     ax.get_yaxis().set_visible(False)
@@ -162,6 +178,7 @@ def content_plot(model_name, save=False):
     if save:
         p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
     p.close(fig2)
+
 
 def feature_importance_plot(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
