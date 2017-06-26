@@ -37,7 +37,7 @@ def calculate_metrics(model_name):
         bkg_repartition *= cst.luminosity
         specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
         acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
-        significance = [correct_in_cat[cat] / np.sqrt(correct_in_cat[cat] + wrong_in_cat[cat]) for cat in range(nb_categories)]
+        significance = [correct_in_cat[cat] / np.sqrt(correct_in_cat[cat] + wrong_in_cat[cat] + bkg_repartition[cat]) for cat in range(nb_categories)]
 
         np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
         np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
