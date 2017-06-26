@@ -62,7 +62,7 @@ def make_pretty_table(model_name):
     bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
     bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
     bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates_test.dst').astype(int)
-    bkg_weights_ref *= 0.5 # Here there was no train/test split 
+    bkg_weights_ref *= 1. #0.5 # Here there was no train/test split 
     nb_categories = len(cst.event_categories)
     nb_processes = nb_categories + 1   # Consider all background at once
 

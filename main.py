@@ -13,10 +13,10 @@ logging.info('Logger initialized from main script')
 if cst.ignore_warnings:
     warnings.filterwarnings('ignore')
 
-evl.calculate_metrics('xgb_ref')
-evl.content_plot('xgb_ref', save=True, layer=0)
-evl.content_plot('xgb_ref_stacked', save=True, layer=1)
-evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
+#evl.calculate_metrics('xgb_ref')
+#evl.content_plot('xgb_ref', save=True, layer=0)
+#evl.content_plot('xgb_ref_stacked', save=True, layer=1)
+#evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
 evl.make_pretty_table('xgb_ref_doublestacked')
 
 exit()
