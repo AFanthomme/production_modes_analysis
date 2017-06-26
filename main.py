@@ -16,7 +16,10 @@ if cst.ignore_warnings:
 evl.content_plot('xgb_ref', save=True, layer=0)
 evl.content_plot('xgb_ref_stacked', save=True, layer=1)
 evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
-#evl.make_pretty_table('xgb_ref_doublestacked')
+#evl.calculate_metrics('xgb_ref')
+#evl.calculate_metrics('xgb_ref_stacked')
+#evl.calculate_metrics('xgb_ref_doublestacked')
+evl.make_pretty_table('xgb_ref_doublestacked')
 
 exit()
 
@@ -58,12 +61,12 @@ for plop in [1]:
                 logging.info('Stacking third layer for ' + model_name + suffix)
                 ctg.make_double_stacked_predictors(model_name)
         try:
-            #raise IOError
+            raise IOError
             open('saves/predictions/' + model_name + suffix + '_predictions.prd', 'rb')
             open('saves/predictions/' + model_name + suffix + '_bkg_predictions.prd', 'rb')
         except IOError:
             logging.info('Generating predictions for ' + model_name + suffix)
-            #ctg.generate_predictions(model_name)
+            ctg.generate_predictions(model_name)
         try:
             raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')

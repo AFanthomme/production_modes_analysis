@@ -363,7 +363,7 @@ class double_stacked_model(object):
             indices = np.where(predictions.astype(int) == idx)
             subset = events.iloc[indices]
             modify = np.logical_not(rejector.predict(subset).astype(bool))
-            predictions[indices[0][modify]] = -10  # Maybe set it to a new category for background
+            predictions[indices[0][modify]] = 0  # Set it to -1 to implement bkg rejection 
         return predictions
 
 def make_stacked_predictors(model_name):
