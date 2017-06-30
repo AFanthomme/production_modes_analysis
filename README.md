@@ -22,7 +22,7 @@ Optional arguments (more details in the rest of the text):
 --dispatch : force train the first layer of the model
 --layers : force train the second and third layers
 
-Note that by default the program is lazy and will not redo the intermediate steps.
+Note that by default the program will try to open the intermediate saves, and if this step fails will do the corresponding step of the treatment. The above flags are used to counter this behavior.
 
 
 ## Details:
