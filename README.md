@@ -2,7 +2,7 @@
 
 
 
-#### Using Monte-Carlo simulated data, train Machine Learning classifiers to reconstruct the production modes of Higgs bosons decaying in the Golden Channel. The performance of the models can be evaluated either directly from their category content plot, or from our custom  "Specificity vs Acceptance" curves (in this implementation, only the metrics on VBF category are considered).
+#### Using Monte-Carlo simulated data, train Machine Learning classifiers to reconstruct the production modes of Higgs bosons decaying in the Golden Channel.
 
 
 
@@ -18,9 +18,9 @@ To run the program :
 - display the figures that were generated in the \saves\figs directory.
 
 Optional arguments (more details in the rest of the text):
---preproc : force run the ROOT preprocessing step
---dispatch : force train the first layer of the model
---layers : force train the second and third layers
+- --preproc : force run the ROOT preprocessing step
+- --dispatch : force train the first layer of the model
+- --layers : force train the second and third layers
 
 Note that by default the program will try to open the intermediate saves, and if this step fails will do the corresponding step of the treatment. The above flags are used to counter this behavior.
 
