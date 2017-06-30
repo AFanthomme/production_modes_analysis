@@ -1,47 +1,49 @@
 import os
-from copy import copy
-from itertools import izip
 import matplotlib.pyplot as p
 import numpy as np
-import core.trainer as ctg
 import core.constants as cst
 import cPickle as pickle
 import pandas as pd
 import matplotlib.cm as cm
+from copy import copy
+from itertools import izip
+
 
 def calculate_metrics(model_name):
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    model_name += suffix
-    suffix += '/'
+    
+    for model_name in [model_name + suffix, model_name + '_stacked' + suffix, model_name + '_doublestacked' + suffix]:
+        suffix += '/'
+    
+        true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
+        weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
+        predictions = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
+    
+        nb_categories = len(cst.event_categories)
+        contents_table = np.zeros((nb_categories, nb_categories))
+    
+        for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
+            if predicted_tag >= 0:
+                contents_table[predicted_tag, true_tag] += rescaled_weight
+    
+        contents_table *= cst.luminosity
+        correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]
+        wrong_in_cat = np.sum(np.where(np.logical_not(np.identity(nb_categories, dtype=bool)), contents_table, 0), axis=1)
+        cat_total_content = np.sum(contents_table, axis=0)
+    
+        bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
+        bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
+        bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
+        bkg_repartition *= cst.luminosity
+        specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
+        acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
+        significance = [correct_in_cat[cat] / np.sqrt(correct_in_cat[cat] + wrong_in_cat[cat] + bkg_repartition[cat]) for cat in range(nb_categories)]
 
-    if not os.path.isfile('saves/predictions/' + model_name + '_predictions.prd'):
-        ctg.generate_predictions(model_name)
-
-    true_categories = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
-    weights = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
-    predictions = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
-
-    nb_categories = len(cst.event_categories)
-    contents_table = np.zeros((nb_categories, nb_categories))
-
-    for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-        contents_table[predicted_tag, true_tag] += rescaled_weight
-
-    contents_table *= cst.luminosity
-    correct_in_cat = [contents_table[cat, cat] for cat in range(nb_categories)]
-    wrong_in_cat = np.sum(np.where(np.logical_not(np.identity(nb_categories, dtype=bool)), contents_table, 0), axis=1)
-    cat_total_content = np.sum(contents_table, axis=0)
-
-    bkg_predictions = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-    bkg_repartition = np.array([np.sum(bkg_weights[np.where(bkg_predictions == cat)]) for cat in range(nb_categories)])
-    bkg_repartition *= 0.5 * cst.luminosity  # No train/test split 
-    specificity = [1. / (1. + (bkg_repartition[cat] + wrong_in_cat[cat]) / correct_in_cat[cat]) for cat in range(nb_categories)]
-    acceptance = [correct_in_cat[cat] / cat_total_content[cat] for cat in range(nb_categories)]
-    np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
-    np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
-    np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
-    np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
+        np.savetxt('saves/metrics/' + model_name + '_specificity.txt', specificity)
+        np.savetxt('saves/metrics/' + model_name + '_acceptance.txt', acceptance)
+        np.savetxt('saves/metrics/' + model_name + '_significance.txt', significance)
+        np.savetxt('saves/metrics/' + model_name + '_bkgrepartition.txt', bkg_repartition)
+        np.savetxt('saves/metrics/' + model_name + '_contentstable.txt', contents_table)
 
 def make_pretty_table(model_name):
     fs_labels = ['_4e', '_2e2mu', '_4mu']
@@ -58,9 +60,9 @@ def make_pretty_table(model_name):
     predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
     final_states = np.loadtxt('saves/common' + suffix + 'full_test_finalstates.dst').astype(int)
     bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights.wgt')
-    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates.dst').astype(int)
-    bkg_weights_ref *= 0.5 # Here there was no train/test split 
+    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
+    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates_test.dst').astype(int)
+    bkg_weights_ref *= 1. #0.5 # Here there was no train/test split 
     nb_categories = len(cst.event_categories)
     nb_processes = nb_categories + 1   # Consider all background at once
 
@@ -76,10 +78,12 @@ def make_pretty_table(model_name):
         bkg_predictions = bkg_predictions_ref[bkg_mask_fs]
 
         for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-            contents_table[predicted_tag, true_tag] += rescaled_weight
+            if predicted_tag >= 0:
+                contents_table[predicted_tag, true_tag] += rescaled_weight
 
         for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
-            contents_table[predicted_tag, -1] += rescaled_weight
+            if predicted_tag >= 0:
+                contents_table[predicted_tag, -1] += rescaled_weight
         
         contents_table *= cst.luminosity
 
@@ -92,22 +96,34 @@ def make_pretty_table(model_name):
         with open('saves/tables_latex/' + model_name + fs_label, 'w') as f:
             f.write(pretty_table)
 
-def content_plot(model_name, save=False):
+def content_plot(model_name, save=False, layer=0):
     tags_list = copy(cst.event_categories)
     nb_categories = len(cst.event_categories)
     no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
     model_name += suffix
     suffix += '/'
-
-    contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
-    specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
-    acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
-    bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+   
+    try:
+        contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
+        specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
+        acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        significance = np.loadtxt('saves/metrics/' + model_name + '_significance.txt')
+        bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
+    except:
+        model_name = '_'.join((model_name.split('_')[:-2])) + '_nomass_' + model_name.split('_')[-2]
+        contents_table = np.loadtxt('saves/metrics/' + model_name + '_contentstable.txt')
+        specificity = np.loadtxt('saves/metrics/' + model_name + '_specificity.txt')
+        acceptance = np.loadtxt('saves/metrics/' + model_name + '_acceptance.txt')
+        significance = np.loadtxt('saves/metrics/' + model_name + '_significance.txt')
+        bkg_repartition = np.loadtxt('saves/metrics/' + model_name + '_bkgrepartition.txt')
 
     ordering = [nb_categories - 1 - i for i in range(nb_categories)]
 
+    dummy = ['first', 'second', 'third']
+    model_name = dummy[layer] + '_layer'
+
     fig = p.figure()
-    p.title('Content plot for ' + model_name, y=-0.12)
+    p.title('Content plot for ' + " ".join(model_name.split('_')), y=-0.12)
     ax = fig.add_subplot(111)
     color_array = ['b', 'g', 'r', 'brown', 'm', '0.75', 'c', 'b']
 
@@ -125,13 +141,19 @@ def content_plot(model_name, save=False):
                            tmp + normalized_content[gen_mode],
                            color=color_array[gen_mode])
             tmp += normalized_content[gen_mode]
-        ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
-                str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{S} = $' +
-                str(np.round(specificity[category], 3)) + r'$; \mathcal{A} =$' + str(np.round(acceptance[category], 3))
-                , fontsize=16, color='w')
+        if layer == 0:
+            ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
+                    str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\mathcal{A} =$' +
+                    str(np.round(acceptance[category], 3)), fontsize=16, color='w')
+        else:
+            ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' +
+                    str(np.round(np.sum(contents_table[category, :]), 2)) + r' events; $\eta =$' +
+                    str(np.round(significance[category], 3)), fontsize=16, color='w')
+
+
 
     ax.get_yaxis().set_visible(False)
-    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=6, fontsize=11, mode="expand", borderaxespad=0.)
+    p.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=7, fontsize=10, mode="expand", borderaxespad=0.)
     if save:
         fig.savefig('saves/figs/' + model_name + '_content_plot.png')
     else:
@@ -139,14 +161,16 @@ def content_plot(model_name, save=False):
     p.close(fig) 
 
     fig2 = p.figure(2)
-    p.title('Per-category fraction of background events for ' + model_name, y=-0.12)
+    p.title('Per-category fraction of background events for ' + " ".join(model_name.split('_')) +
+            '\n Total of ' + str(np.round(np.sum(bkg_repartition), 2)) + ' background events', y=-0.12)
     ax = fig2.add_subplot(111)
     for category in range(nb_categories):
         position = ordering[category]
-        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0., bkg_repartition[category] / np.sum(contents_table[category,:]),
+        ax.axhspan(position * 0.19 + 0.025, (position + 1) * 0.19 - 0.025, 0.,
+                   bkg_repartition[category] / np.sum(contents_table[category,:]),
                   color='0.75', label=cst.event_categories[category])
         ax.text(0.01, (position + 0.5) * 0.19 - 0.025, tags_list[category] + ', ' + 
-                str(np.round(bkg_repartition[category], 2)) + r' background events'
+                str(np.round(bkg_repartition[category], 2)) + r' bkg events'
                 , fontsize=16, color='b')
 
     ax.get_yaxis().set_visible(False)
@@ -154,6 +178,7 @@ def content_plot(model_name, save=False):
     if save:
         p.savefig('saves/figs/' + model_name + '_contamination_plot.png')
     p.close(fig2)
+
 
 def feature_importance_plot(model_name):
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -226,3 +251,50 @@ def check_weight_influence():
     p.legend(loc=1)
     p.savefig('saves/figs/weight_influence')
     p.show()
+
+def formatter(model_name):
+    """
+    Generate properly formatted Datacards
+
+    Would be useful to avoid spending one hour
+    :param model_name:
+    :return:
+    """
+    fs_labels = ['_4e', '_2e2mu', '_4mu']
+
+    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
+    model_name += suffix
+    suffix += '/'
+
+    true_categories_ref = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
+    weights_ref = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
+    predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
+    final_states = np.loadtxt('saves/common' + suffix + 'full_test_finalstates.dst').astype(int)
+    bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
+    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
+    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates_test.dst').astype(int)
+    nb_categories = len(cst.event_categories)
+    nb_processes = nb_categories + 1
+
+    for fs_idx, fs_label in enumerate(fs_labels):
+        contents_table = np.zeros((nb_categories, nb_processes))
+        mask_fs = np.where(final_states == fs_idx)
+        true_categories = true_categories_ref[mask_fs]
+        weights = weights_ref[mask_fs]
+        predictions = predictions_ref[mask_fs]
+
+        bkg_mask_fs = np.where(bkg_final_states == fs_idx)
+        bkg_weights = bkg_weights_ref[bkg_mask_fs]
+        bkg_predictions = bkg_predictions_ref[bkg_mask_fs]
+
+        for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
+            contents_table[predicted_tag, true_tag] += rescaled_weight
+
+        for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
+            contents_table[predicted_tag, -1] += rescaled_weight
+
+        contents_table *= cst.luminosity
+        contents_table[np.where(contents_table == 0.)] = 0.00001 # Apparently helps convergence in final fit.
+
+    template = {} # This should be the template to fill with the values
+   # template.format(contents_table)

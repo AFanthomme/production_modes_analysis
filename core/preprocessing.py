@@ -1,19 +1,16 @@
 '''
-Preprocessing from root to sklearn compatible datasets
+Preprocessing from ROOT to simple numpy datasets
 
-Implements all the steps to go from one root file for each production mode to a global scaled training (and test) set 
-with the associated weights, labels, scaler (to be used if inputting new data)
+We removed scaling as it is not necessary for Decision Trees. All this could probably be improved significantly
+by using pandas
 '''
 import os
 import logging
-import cPickle as pickle
 from shutil import rmtree
 import ROOT as r
 from root_numpy import tree2array
 import numpy as np
 import numpy.lib.recfunctions as rcf
-from sklearn import preprocessing as pr
-from core.misc import frozen
 import core.constants as cst
 
 
@@ -107,9 +104,14 @@ def get_background_files(modes=(0, 1, 2), m_range=('118', '130')):
 
             weights *= cst.cross_sections[background] / cst.event_numbers[background]
 
-            np.savetxt(directory + background + '.dst', data_set)
-            np.savetxt(directory + background + '_weights.wgt', weights)
-            np.savetxt(directory + background + '_finalstates.dst', final_states)
+            nb_events = np.ma.size(data_set, 0)
+
+            np.savetxt(directory + background + '_training.dst', data_set[:nb_events // 2])
+            np.savetxt(directory + background + '_weights_training.wgt', weights[:nb_events // 2])
+            np.savetxt(directory + background + '_finalstates_training.dst', final_states[:nb_events // 2])
+            np.savetxt(directory + background + '_test.dst', data_set[nb_events // 2:])
+            np.savetxt(directory + background + '_weights_test.wgt', weights[nb_events // 2:])
+            np.savetxt(directory + background + '_finalstates_test.dst', final_states[nb_events // 2:])
             logging.info(background + ' weights, training and test sets successfully stored in ' + directory)
 
 
@@ -274,40 +276,13 @@ def merge_vector_modes(modes=(0, 1)):
     logging.info('Merged data successfully generated')
 
 
-def prepare_scalers(modes=(0, 1)):
-    gen_modes_int = cst.event_categories
+def make_full_datasets(modes=(0, 1, 2)):
     for mode in modes:
         directory, no_care = cst.dir_suff_dict[mode]
-        file_list = [directory + mode for mode in gen_modes_int]
-        training_set = np.loadtxt(file_list[0] + '_training.txt')
-        test_set = np.loadtxt(file_list[0] + '_test.txt')
-
-        for idx, filename in enumerate(file_list[1:]):
-            temp_train = np.loadtxt(filename + '_training.txt')
-            temp_test = np.loadtxt(filename + '_test.txt')
-            training_set = np.concatenate((training_set, temp_train), axis=0)
-            test_set = np.concatenate((test_set, temp_test), axis=0)
-
-        scaler = pr.StandardScaler()
-        scaler.fit(training_set)
-        scaler.fit = frozen
-        scaler.fit_transform = frozen
-        scaler.set_params = frozen
-
-        with open(directory + 'scaler.pkl', 'wb') as f:
-            pickle.dump(scaler, f)
-
-
-def make_scaled_datasets(modes=(0, 1, 2)):
-    for mode in modes:
-        directory, no_care = cst.dir_suff_dict[mode]
-        with open(directory + 'scaler.pkl', 'rb') as f:
-            scaler = pickle.load(f)
 
         file_list = [directory + cat for cat in cst.event_categories]
-        training_set = scaler.transform(np.loadtxt(file_list[0] + '_training.txt'))
-        test_set = scaler.transform(np.loadtxt(file_list[0] + '_test.txt'))
-        np.savetxt(file_list[0] + '_test_scaled.txt', test_set)
+        training_set = np.loadtxt(file_list[0] + '_training.txt')
+        test_set = np.loadtxt(file_list[0] + '_test.txt')
         training_labels = np.zeros(np.ma.size(training_set, 0))
         test_labels = np.zeros(np.ma.size(test_set, 0))
         training_weights = np.loadtxt(file_list[0] + '_weights_training.txt') * \
@@ -320,8 +295,8 @@ def make_scaled_datasets(modes=(0, 1, 2)):
 
 
         for idx, filename in enumerate(file_list[1:]):
-            temp_train = scaler.transform(np.loadtxt(filename + '_training.txt'))
-            temp_test = scaler.transform(np.loadtxt(filename + '_test.txt'))
+            temp_train = np.loadtxt(filename + '_training.txt')
+            temp_test = np.loadtxt(filename + '_test.txt')
             tmp_training_weights = np.loadtxt(filename + '_weights_training.txt') * \
                                    cst.cross_sections[filename.split('/')[-1]] / cst.event_numbers[filename.split('/')[-1]]
             tmp_test_weights = np.loadtxt(filename + '_weights_test.txt') * \
@@ -362,10 +337,8 @@ def full_process(modes=tuple(range(2)), m_range=('118', '130')):
     read_root_files(modes, m_range)
     logging.info('Merging vector modes')
     merge_vector_modes(modes)
-    logging.info('Preparing scalers')
-    prepare_scalers(modes)
     logging.info('Merging and scaling datasets')
-    make_scaled_datasets(modes)
+    make_full_datasets(modes)
     logging.info('Getting background files')
     get_background_files(modes, m_range)
     logging.info('Removing all intermediate files')

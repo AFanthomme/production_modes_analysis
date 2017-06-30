@@ -1,5 +1,7 @@
 """
-Define all constants needed for what we want to do, and the sklearn models to use
+Define most constants and does initial setup.
+
+Also defines which dispatchers to try.
 """
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
@@ -68,7 +70,7 @@ likelihood_names = ['p_JJQCD_SIG_ghg2_1_JHUGen_JECNominal', 'p_JQCD_SIG_ghg2_1_J
 backgrounds = ['ZZTo4l']
 
 xgb_base = XGBClassifier(
-     learning_rate =0.04,
+     learning_rate =0.03,
      n_estimators=1000,
      max_depth=4,
      min_child_weight=4,
@@ -77,19 +79,12 @@ xgb_base = XGBClassifier(
      colsample_bytree=0.8,
      objective='multi:softmax',
      num_class=7,
-     n_jobs=16,
+     n_jobs=24,
      )
 
 decision_stump = DecisionTreeClassifier(max_depth=1)
 
-models_dict = {'xgbslow_170': (xgb_base, [1.7, 1., 1., 1., 1., 1., 1.]),
-               'xgbslow_500': (xgb_base, [5., 1., 1., 1., 1., 1., 1.]),
+models_dict = {
+               'xgb_ref': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
                }
 
-
-def add_xgdb():
-    for purity_param in np.arange(100, 500, step=10):
-        models_dict['xgbslow' + '_' + str(purity_param)] = \
-            (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-
-#add_xgdb()
