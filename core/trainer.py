@@ -1,5 +1,9 @@
+"""
+Train the three-layer models and generate their predictions.
+Other lower layers can be specified if careful.
+
+"""
 import logging
-import os
 import cPickle as pickle
 import numpy as np
 import core.constants as cst
@@ -8,7 +12,7 @@ import xgboost as xgb
 import pandas as pd
 from xgboost.sklearn import XGBClassifier
 from sklearn.model_selection import ParameterGrid
-from itertools import izip
+
 
 train, test, predictors, target, current_feature_set, bkg_train, bkg_test, train_label, test_label, \
 test_weights, train_weights, bkg_train_weights = \
@@ -29,6 +33,13 @@ lower_layers = XGBClassifier(
 )
 
 def prepare_xgdb():
+    """
+    Sets data as global variables.
+
+    Slightly reduces execution time
+    :return: Nothing, but sets global values.
+    """
+
     global train, test, predictors, target, bkg_train, bkg_test, current_feature_set, train_label, test_label
     global test_weights, train_weights, bkg_train_weights
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
@@ -53,11 +64,19 @@ def prepare_xgdb():
     current_feature_set = cst.features_set_selector
 
 
-def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
+def train_xgb(model_name, early_stopping_rounds=30, cv_folds=5):
+    """
+    We make use of some particularities of xgb models,
+    :param model_name:
+    :param early_stopping_rounds:
+    :param cv_folds:
+    :return:
+    """
+
     if cst.features_set_selector != current_feature_set:
         logging.info('Reloading datasets with new feature set')
         prepare_xgdb()
-        logging.info('	New dataset loaded')
+        logging.info('New dataset loaded')
 
     alg_temp, class_weights_temp = cst.models_dict[model_name]
     alg = copy(alg_temp)
@@ -76,82 +95,16 @@ def train_xgcd(model_name, early_stopping_rounds=30, cv_folds=5):
         pickle.dump(alg, f)
 
 
-def generate_predictions(model_name):
-    directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
-
-    with open('saves/classifiers/' + model_name + suffix + '_basecategorizer.pkl', mode='rb') as f:
-        classifier = pickle.load(f)
-
-    out_path = 'saves/predictions/' + model_name + suffix
-    results = classifier.predict(test)
-    probas = classifier.predict_proba(test)
-    bkg_results = classifier.predict(bkg_test)
-    np.savetxt(out_path + '_predictions.prd', results)
-    np.savetxt(out_path + '_probas.prb', probas)
-    np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
-
-    results = classifier.predict(train)
-    bkg_results = classifier.predict(bkg_train)
-    np.savetxt(out_path + '_train_predictions.prd', results)
-    np.savetxt(out_path + '_train_bkg_predictions.prd', bkg_results)
-
-def formatter(model_name):
-    fs_labels = ['_4e', '_2e2mu', '_4mu']
-
-    no_care, suffix = cst.dir_suff_dict[cst.features_set_selector]
-    model_name += suffix
-    suffix += '/'
-
-    true_categories_ref = np.loadtxt('saves/common' + suffix + 'full_test_labels.lbl')
-    weights_ref = np.loadtxt('saves/common' + suffix + 'full_test_weights.wgt')
-    predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_predictions.prd')
-    final_states = np.loadtxt('saves/common' + suffix + 'full_test_finalstates.dst').astype(int)
-    bkg_predictions_ref = np.loadtxt('saves/predictions/' + model_name + '_bkg_predictions.prd')
-    bkg_weights_ref = np.loadtxt('saves/common' + suffix + 'ZZTo4l_weights_test.wgt')
-    bkg_final_states = np.loadtxt('saves/common' + suffix + 'ZZTo4l_finalstates_test.dst').astype(int)
-    bkg_weights_ref *= 0.5  # Here there was no train/test split
-    nb_categories = len(cst.event_categories)
-    nb_processes = nb_categories + 1  # Consider all background at once
-
-    for fs_idx, fs_label in enumerate(fs_labels):
-        contents_table = np.zeros((nb_categories, nb_processes))
-        mask_fs = np.where(final_states == fs_idx)
-        true_categories = true_categories_ref[mask_fs]
-        weights = weights_ref[mask_fs]
-        predictions = predictions_ref[mask_fs]
-
-        bkg_mask_fs = np.where(bkg_final_states == fs_idx)
-        bkg_weights = bkg_weights_ref[bkg_mask_fs]
-        bkg_predictions = bkg_predictions_ref[bkg_mask_fs]
-
-        for true_tag, predicted_tag, rescaled_weight in izip(true_categories, predictions, weights):
-            contents_table[predicted_tag, true_tag] += rescaled_weight
-
-        for predicted_tag, rescaled_weight in izip(bkg_predictions, bkg_weights):
-            contents_table[predicted_tag, -1] += rescaled_weight
-
-        contents_table *= cst.luminosity
-
-   # template.format(contents_table)
-
-
-
-# def custom_scoring(estimator, X, y, mode=1):
-#     ref_up = [0.22, 1.15, 3.79, 3.2, 2.82, 10.]
-#     ref_down = [0.2, 0.88, 1., 1., 1., 1.]
-#
-#     # Complicated sequence to get the error bars downwards (std_down) and upwards (std_up)
-#     std_down, std_up = 0.1, 0.1
-#     error = std_down + std_up
-#
-#     if std_down > ref_down[mode]:
-#         error += 3.
-#     if std_up > ref_up[mode]:
-#         error += 3.
-#     return -error
-
-
 def significance_factory(event_weights):
+    """
+    Return the evaluation metrics for the grid-search
+
+    This is necessary since the metrics depends on the considered events and their weights
+    WARNING : this might be a problem if trying to modify the code.
+
+    :param event_weights:
+    :return:
+    """
     def stat_significance_score(estimator, X, y):
         predictions = estimator.predict(X).astype(int)
         signal_in_cat = np.sum(event_weights[np.where(np.logical_and(predictions == 1, y == 1))]) * cst.luminosity
@@ -160,6 +113,11 @@ def significance_factory(event_weights):
     return stat_significance_score
 
 class gridSearch_basic(object):
+    """
+    Grid-search without cross-validation
+
+    Since our evaluation metrics is so shady, it won't be easily integrated into an sklearn GridSearchCV
+    """
 
     def __init__(self, param_grid, estimator, X, y, scoring=None):
         self.param_grid = param_grid
@@ -172,7 +130,7 @@ class gridSearch_basic(object):
         if scoring:
             self.scorer = scoring
         else:
-            exit()
+            raise RuntimeError
 
     def fit(self, verbose=True):
         for idx, params in enumerate(self.param_grid):
@@ -189,6 +147,15 @@ class gridSearch_basic(object):
 
 
 def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
+    """
+    Add layer to purify the categories and populate the first one.
+
+    :param model_name:
+    :param early_stopping_rounds:
+    :param cv_folds:
+    :return:
+    """
+
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
     _, class_weights_temp = cst.models_dict[model_name]
 
@@ -201,54 +168,62 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         base = pickle.load(f)
 
     predictions = base.predict(train[predictors])
-    bkg_predictions = base.predict(bkg_train[predictors])
+    # bkg_predictions = base.predict(bkg_train[predictors])
 
     for category in range(1, 7):
+        # Make the training set out of elements dispatched in our category
+        # Do not consider background yet.
         sub_train = train.iloc[np.where(predictions == category)]
         sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
-        sub_wgt = train_weights[np.where(predictions == category)]
-
-        # np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
-        # np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
-
         sub_train['prod_mode'] = sub_label
+        sub_train['weights'] = train_weights[np.where(predictions == category)]
+        validator_specific_metric = significance_factory(sub_train['weights'])
 
         directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
         alg = copy(lower_layers)
         xgb_param = alg.get_xgb_params()
         xgtrain = xgb.DMatrix(sub_train[predictors].values, label=sub_train[target].values)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
-                          stratified=False, metrics='auc',
-                          early_stopping_rounds=early_stopping_rounds, verbose_eval=15)
+                stratified=False, metrics='auc', early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
         alg.set_params(n_estimators=cvresult.shape[0])
         logging.info('Number of boosting rounds optimized')
 
         scales = np.linspace(0.3, 1.3, 11)
         params_dict = ParameterGrid({'scale_pos_weight': scales})
-
-        sub_train = sub_train[predictors]
-        np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
-        np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
-        np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
-
-        validator_specific_metric = significance_factory(sub_wgt)
-        sub_train['prod_mode'] = sub_label
-
-
-        # Here we do a grid search without cv beacause it's painful to implement with our shady metrics
         plop = gridSearch_basic(params_dict, alg, sub_train[predictors].values, sub_train[target].values,
                                 scoring=validator_specific_metric)
         plop.fit()
         res = plop.best_params_
         logging.info('\tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
-
         alg.set_params(**plop.best_params_)
+
+
+        #  Now add background ???
+        # sub_train = sub_train[predictors]
+        # sub_wgt = sub_train['weights']
+        # np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
+        # np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
+        # np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
+        # sub_train['prod_mode'] = sub_label
+        # sub_train['weights'] = sub_wgt
+
+
         alg.fit(sub_train[predictors], sub_train[target])
 
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'wb') as f:
             pickle.dump(alg, f)
 
 def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
+    """ Train the background rejectors
+
+    In fact, useful only for ggH and VH_lep, but we do it for everyone because why not
+
+    :param model_name:
+    :param early_stopping_rounds:
+    :param cv_folds:
+    :return:
+    """
+
     directory, suffix = cst.dir_suff_dict[cst.features_set_selector]
     _, class_weights_temp = cst.models_dict[model_name]
 
@@ -265,24 +240,21 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
 
     for category in range(7):
         sub_train = train.iloc[np.where(predictions == category)]
-        # sub_label = (train_label[np.where(predictions == category)] == category).astype(int)
         sub_label = np.ones_like(sub_train)
         sub_wgt = train_weights[np.where(predictions == category)]
+        sub_train['prod_mode'] = sub_label
+        sub_train['weights'] = sub_wgt
 
         sub_train_bkg = bkg_train.iloc[np.where(bkg_predictions == category)]
+        sub_wgt_bkg = bkg_train_weights[np.where(bkg_predictions == category)]
         sub_train_bkg['prod_mode'] = np.zeros(sub_train_bkg.shape[0])
+        sub_train_bkg['weights'] = sub_wgt_bkg
 
-       # sub_train = pd.concat([sub_train, bkg_train.iloc[np.where(bkg_predictions == category)]])
-       # sub_label = np.append(sub_label, np.zeros(len(np.where(bkg_predictions == category))))
-        sub_wgt = np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
-        sub_train['prod_mode'] = sub_label
+        sub_train_full = pd.concat([sub_train, sub_train_bkg])
+        validator_specific_metric = significance_factory(sub_train_full['weights'])
 
-        validator_specific_metric = significance_factory(sub_wgt)
-        
-        sub_train = pd.concat([sub_train, sub_train_bkg])
-        # print(sub_train['prod_mode'].value_counts())
-        # print(bkg_train_weights[np.where(bkg_predictions == category)], np.sum(bkg_train_weights))
-        if len(sub_train['prod_mode'].unique()) == 1 or category == 4:
+
+        if len(sub_train_full['prod_mode'].unique()) == 1 or category == 4:
             logging.info('validator ' + str(category) + ' is useless')
             with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
                 pickle.dump(dummy_predictor(1), f)
@@ -293,11 +265,9 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         xgb_param = alg.get_xgb_params()
         alg.set_params(scale_pos_weight=0.06)
         
-        alg.fit(sub_train[predictors], sub_train[target])
-        print('predicted : ', np.unique(alg.predict(sub_train[predictors])))
-   
+        alg.fit(sub_train_full[predictors], sub_train_full[target])
 
-        xgtrain = xgb.DMatrix(sub_train[predictors].values, label=sub_train[target].values)
+        xgtrain = xgb.DMatrix(sub_train_full[predictors].values, label=sub_train_full[target].values)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
                           stratified=False, metrics='auc',
                           early_stopping_rounds=early_stopping_rounds, verbose_eval=15)
@@ -306,17 +276,15 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
 
         scales = np.append(np.linspace(0., 0.5, 15), np.linspace(1., 10., 10))
         params_dict = ParameterGrid({'scale_pos_weight': scales})
-
-        # Here we do a grid search without cv beacause it's painful to implement with our shady metrics
-        plop = gridSearch_basic(params_dict, alg, sub_train[predictors].values, sub_train[target].values,
+        plop = gridSearch_basic(params_dict, alg, sub_train_full[predictors].values, sub_train_full[target].values,
                                 scoring=validator_specific_metric)
         plop.fit()
         res = plop.best_params_
         logging.info('\tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
 
         alg.set_params(**plop.best_params_)
-        alg.fit(sub_train[predictors], sub_train[target])
-        logging.info(np.bincount(alg.predict(sub_train[predictors]).astype(int)))
+        alg.fit(sub_train_full[predictors], sub_train_full[target])
+
         with open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer' + str(category) + '.pkl', 'wb') as f:
             pickle.dump(alg, f)
         
@@ -328,27 +296,10 @@ class dummy_predictor(object):
 
 
 class stacked_model(object):
-    def __init__(self, base, subs):
+    def __init__(self, base, subs, rejectors=None):
         self.base_classifier = base
         self.subclassifiers = subs
-
-    def predict(self, events):
-        predictions = np.array(self.base_classifier.predict(events))
-        
-        for idx, subclassifier in enumerate(self.subclassifiers):
-            indices = np.where(predictions.astype(int) == idx)
-            subset = events.iloc[indices]
-            modify = np.logical_not(subclassifier.predict(subset).astype(bool))
-            predictions[indices[0][modify]] = 0
-
-        return predictions
-
-
-class double_stacked_model(object):
-    def __init__(self, base, subs, subsubs):
-        self.base_classifier = base
-        self.subclassifiers = subs
-        self.rejectors = subsubs
+        self.rejectors = rejectors
 
     def predict(self, events):
         predictions = np.array(self.base_classifier.predict(events))
@@ -358,12 +309,12 @@ class double_stacked_model(object):
             subset = events.iloc[indices]
             modify = np.logical_not(subclassifier.predict(subset).astype(bool))
             predictions[indices[0][modify]] = 0
-
-        for idx, rejector in enumerate(self.rejectors):
-            indices = np.where(predictions.astype(int) == idx)
-            subset = events.iloc[indices]
-            modify = np.logical_not(rejector.predict(subset).astype(bool))
-            predictions[indices[0][modify]] = 0  # Set it to -1 to implement bkg rejection 
+        if self.rejectors:
+            for idx, rejector in enumerate(self.rejectors):
+                indices = np.where(predictions.astype(int) == idx)
+                subset = events.iloc[indices]
+                modify = np.logical_not(rejector.predict(subset).astype(bool))
+                predictions[indices[0][modify]] = 0  # Set it to -1 to implement bkg rejection
         return predictions
 
 def make_stacked_predictors(model_name):
@@ -382,7 +333,6 @@ def make_stacked_predictors(model_name):
     stacked = stacked_model(base_classifier, subclassifiers)
     with open('saves/classifiers/' + model_name + suffix + '_stacked_categorizer.pkl', mode='wb') as f:
         pickle.dump(stacked, f)
-
 
     out_path = 'saves/predictions/' + model_name
     compare = base_classifier.predict(test)
@@ -416,7 +366,7 @@ def make_double_stacked_predictors(model_name):
             alg = pickle.load(f)
         validators[category] = alg
 
-    stacked = double_stacked_model(base_classifier, subclassifiers, validators)
+    stacked = stacked_model(base_classifier, subclassifiers, validators)
     with open('saves/classifiers/' + model_name + suffix + '_stacked_categorizer.pkl', mode='wb') as f:
         pickle.dump(stacked, f)
 
@@ -427,6 +377,5 @@ def make_double_stacked_predictors(model_name):
     bkg_results = stacked.predict(bkg_test)
     np.savetxt(out_path + '_predictions.prd', results)
     np.savetxt(out_path + '_bkg_predictions.prd', bkg_results)
-
 
 

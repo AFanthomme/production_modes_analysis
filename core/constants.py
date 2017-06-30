@@ -1,5 +1,7 @@
 """
-Define all constants needed for what we want to do, and the sklearn models to use
+Define most constants and does initial setup.
+
+Also defines which dispatchers to try.
 """
 from sklearn.tree import DecisionTreeClassifier
 import numpy as np
@@ -86,10 +88,3 @@ models_dict = {
                'xgb_ref': (xgb_base, [0., 6., 5., 1., 1., 1., 1.]),
                }
 
-
-def add_xgdb():
-    for purity_param in np.arange(100, 500, step=10):
-        models_dict['xgbslow' + '_' + str(purity_param)] = \
-            (xgb_base, [float(purity_param) / 100., 1., 1., 1., 1., 1., 1.])
-
-#add_xgdb()

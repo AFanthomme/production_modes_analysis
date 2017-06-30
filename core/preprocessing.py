@@ -1,19 +1,16 @@
 '''
-Preprocessing from root to sklearn compatible datasets
+Preprocessing from ROOT to simple numpy datasets
 
-Implements all the steps to go from one root file for each production mode to a global scaled training (and test) set 
-with the associated weights, labels, scaler (to be used if inputting new data)
+We removed scaling as it is not necessary for Decision Trees. All this could probably be improved significantly
+by using pandas
 '''
 import os
 import logging
-import cPickle as pickle
 from shutil import rmtree
 import ROOT as r
 from root_numpy import tree2array
 import numpy as np
 import numpy.lib.recfunctions as rcf
-from sklearn import preprocessing as pr
-from core.misc import frozen
 import core.constants as cst
 
 
