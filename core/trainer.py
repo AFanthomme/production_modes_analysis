@@ -172,7 +172,6 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         base = pickle.load(f)
 
     predictions = base.predict(train[predictors])
-    # bkg_predictions = base.predict(bkg_train[predictors])
 
     for category in range(1, 7):
         # Make the training set out of elements dispatched in our category
@@ -200,18 +199,6 @@ def train_second_layer(model_name, early_stopping_rounds=30, cv_folds=5):
         res = plop.best_params_
         logging.info('\tOptimal scale_pos_weight for validator ' + str(category) + ' : ' + str(res))
         alg.set_params(**plop.best_params_)
-
-
-        #  Now add background ???
-        # sub_train = sub_train[predictors]
-        # sub_wgt = sub_train['weights']
-        # np.append(sub_train, bkg_train.iloc[np.where(bkg_predictions == category)])
-        # np.append(sub_label, np.zeros(bkg_train.iloc[np.where(bkg_predictions == category)].shape[0]))
-        # np.append(sub_wgt, bkg_train_weights[np.where(bkg_predictions == category)])
-        # sub_train['prod_mode'] = sub_label
-        # sub_train['weights'] = sub_wgt
-
-
         alg.fit(sub_train[predictors], sub_train[target])
 
         with open('saves/classifiers/' + model_name + suffix + '_subcategorizer' + str(category) + '.pkl', 'wb') as f:
