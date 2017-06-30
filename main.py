@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(description='To control how much recomputing to
 parser.add_argument('--preproc', action='store_true')
 parser.add_argument('--dispatch', action='store_true')
 parser.add_argument('--layers', action='store_true')
+parser.add_argument('--metrics', action='store_true')
 args = parser.parse_args()
 
 warnings.filterwarnings('ignore')
@@ -26,6 +27,13 @@ logging.basicConfig(filename='logs', format='%(levelname)s %(asctime)s %(message
                     datefmt='%H:%M:%S')
 logging.info('Logger initialized from main script')
 
+
+
+evl.content_plot('xgb_ref', save=True, layer=0)
+evl.content_plot('xgb_ref_stacked', save=True, layer=1)
+evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
+
+exit()
 
 try:
     open('saves/common_nomass/full_test_set.dst')
@@ -40,14 +48,14 @@ for feature_set in [1]:
     for model_name in cst.models_dict.keys():
         logging.info('Studying model ' + model_name + suffix)
         try:
-            if args.--dispatch:
+            if args.dispatch:
                 raise IOError
             open('saves/classifiers/' + model_name + suffix + '_basecategorizer.pkl', 'rb')
         except IOError:
             logging.info('Training model ' + model_name)
             trn.train_xgb(model_name)
         try:
-            if args.--layers:
+            if args.layers:
                 raise IOError
             open('saves/classifiers/' + model_name + suffix + '_subcategorizer6.pkl', 'rb')
             open('saves/classifiers/' + model_name + suffix + '_subsubcategorizer6.pkl', 'rb')
@@ -62,7 +70,8 @@ for feature_set in [1]:
             trn.make_double_stacked_predictors(model_name)
 
         try:
-            raise IOError
+            if args.metrics:
+                raise IOError
             open('saves/metrics/' + model_name + suffix + '_acceptance.txt', 'rb')
         except IOError:
             logging.info('Generating metrics for ' + model_name + suffix)
@@ -72,10 +81,9 @@ for feature_set in [1]:
     logging.info('All models studied with features set ' + suffix)
 
 
-#evl.calculate_metrics('xgb_ref')
-#evl.content_plot('xgb_ref', save=True, layer=0)
-#evl.content_plot('xgb_ref_stacked', save=True, layer=1)
-#evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
+evl.content_plot('xgb_ref', save=True, layer=0)
+evl.content_plot('xgb_ref_stacked', save=True, layer=1)
+evl.content_plot('xgb_ref_doublestacked', save=True, layer=2)
 evl.make_pretty_table('xgb_ref_doublestacked')
 
 exit()

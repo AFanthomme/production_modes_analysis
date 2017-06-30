@@ -105,6 +105,10 @@ def significance_factory(event_weights):
     :param event_weights:
     :return:
     """
+    try:
+        event_weights = event_weights.values
+    except AttributeError:
+        event_weights = np.array(event_weights)
     def stat_significance_score(estimator, X, y):
         predictions = estimator.predict(X).astype(int)
         signal_in_cat = np.sum(event_weights[np.where(np.logical_and(predictions == 1, y == 1))]) * cst.luminosity
@@ -269,8 +273,7 @@ def train_third_layer(model_name, early_stopping_rounds=30, cv_folds=5):
 
         xgtrain = xgb.DMatrix(sub_train_full[predictors].values, label=sub_train_full[target].values)
         cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
-                          stratified=False, metrics='auc',
-                          early_stopping_rounds=early_stopping_rounds, verbose_eval=15)
+               stratified=False, metrics='auc', early_stopping_rounds=early_stopping_rounds, verbose_eval=None)
         alg.set_params(n_estimators=cvresult.shape[0])
         logging.info('Number of boosting rounds optimized')
 
