@@ -8,7 +8,7 @@
 
 The program uses both ROOT, rootpy and root_numpy, all these should be installed on your system in order to generate the datasets.
 We also left the program in a state where it trains our best candidate, the xgboosted trees. Therefore, one should install XGBOOst following the instructions from http://xgboost.readthedocs.io/en/latest/build.html before trying to reproduce the results.
-
+I do not recommand using this on Windows as ROOT is not available (or at least poorly maintained)
 
 To run the program :
 - clone this repository
